@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html class="light" lang="en" data-page="analytics">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Krishi-Setu Analytics: Extraction quality metrics, crawl run trends, and scheme distribution insights."/>
+  <title>Krishi-Setu · Analytics</title>
+  <script src="https://cdn.tailwindcss.com?plugins=forms"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" />
+  <script>
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            primary: "#13ec13",
+            "background-light": "#f6f8f6",
+            "background-dark": "#102210",
+          },
+          fontFamily: { display: ["Public Sans", "sans-serif"] },
+        },
+      },
+    };
+  </script>
+  <style>
+    body { font-family: 'Public Sans', sans-serif; min-height: 100dvh; }
+  </style>
+</head>
+<body class="bg-background-light text-[#111811] dark:bg-background-dark dark:text-white">
+  <script src="/ui/nav.js"></script>
+
+  <main class="mx-auto max-w-7xl px-4 pb-28 pt-24">
+    <section class="mb-6 rounded-3xl border border-blue-100 bg-gradient-to-br from-sky-50 via-white to-emerald-50 p-6 dark:border-emerald-900/40 dark:from-[#112b11] dark:via-[#143114] dark:to-[#1a371a]">
+      <div class="flex flex-wrap items-end justify-between gap-4">
+        <div>
+          <p class="text-xs font-bold uppercase tracking-[0.2em] text-emerald-700 dark:text-emerald-300">Platform Intelligence</p>
+          <h1 class="mt-1 text-3xl font-black tracking-tight">Analytics Dashboard</h1>
+          <p class="mt-1 text-sm text-gray-600 dark:text-gray-300">Extraction quality, run trends, and scheme distribution insights.</p>
+        </div>
+        <button id="refresh-btn" class="rounded-xl bg-primary px-4 py-2 text-sm font-bold text-[#111811] hover:bg-primary/90">
+          <span class="material-symbols-outlined align-middle text-[16px]">refresh</span>
+          Refresh
+        </button>
+      </div>
+    </section>
+
+    <section class="mb-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
+      <article class="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-800 dark:bg-[#1a2e1a]">
+        <p class="text-xs uppercase tracking-wide text-gray-500">Master Schemes</p>
+        <p id="kpi-master" class="mt-1 text-2xl font-black text-emerald-600">-</p>
+      </article>
+      <article class="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-800 dark:bg-[#1a2e1a]">
+        <p class="text-xs uppercase tracking-wide text-gray-500">Curated</p>
+        <p id="kpi-curated" class="mt-1 text-2xl font-black text-blue-600">-</p>
+      </article>
+      <article class="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-800 dark:bg-[#1a2e1a]">
+        <p class="text-xs uppercase tracking-wide text-gray-500">Total Runs</p>
+        <p id="kpi-runs" class="mt-1 text-2xl font-black text-violet-600">-</p>
+      </article>
+      <article class="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-800 dark:bg-[#1a2e1a]">
+        <p class="text-xs uppercase tracking-wide text-gray-500">Source Links</p>
+        <p id="kpi-sources" class="mt-1 text-2xl font-black text-amber-600">-</p>
+      </article>
+      <article class="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-800 dark:bg-[#1a2e1a]">
+        <p class="text-xs uppercase tracking-wide text-gray-500">Media Assets</p>
+        <p id="kpi-media" class="mt-1 text-2xl font-black text-cyan-600">-</p>
+      </article>
+    </section>
+
+    <section class="mb-6 grid gap-4 xl:grid-cols-3">
+      <article class="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm xl:col-span-2 dark:border-gray-800 dark:bg-[#1a2e1a]">
+        <div class="mb-3 flex items-center justify-between">
+          <h2 class="text-sm font-black uppercase tracking-wide text-gray-500">Extraction Trend</h2>
+          <p id="trend-meta" class="text-xs text-gray-500">-</p>
+        </div>
+        <div class="h-72"><canvas id="trend-chart"></canvas></div>
+      </article>
+
+      <article class="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-800 dark:bg-[#1a2e1a]">
+        <h2 class="mb-3 text-sm font-black uppercase tracking-wide text-gray-500">Run Status Mix</h2>
+        <div class="h-72"><canvas id="status-chart"></canvas></div>
+      </article>
+    </section>
+
+    <section class="mb-6 grid gap-4 xl:grid-cols-2">
+      <article class="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-800 dark:bg-[#1a2e1a]">
+        <h2 class="mb-3 text-sm font-black uppercase tracking-wide text-gray-500">Top Scheme Types</h2>
+        <div class="h-72"><canvas id="types-chart"></canvas></div>
+      </article>
+
+      <article class="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-800 dark:bg-[#1a2e1a]">
+        <h2 class="mb-3 text-sm font-black uppercase tracking-wide text-gray-500">Top Ministries</h2>
+        <div class="h-72"><canvas id="ministry-chart"></canvas></div>
+      </article>
+    </section>
+
+    <section class="grid gap-4 xl:grid-cols-5">
+      <article class="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm xl:col-span-3 dark:border-gray-800 dark:bg-[#1a2e1a]">
+        <div class="mb-3 flex items-center justify-between">
+          <h2 class="text-sm font-black uppercase tracking-wide text-gray-500">Recent Crawl Runs</h2>
+          <a href="/crawler" class="text-xs font-bold text-primary hover:underline">Open crawler</a>
+        </div>
+        <div class="overflow-auto">
+          <table class="min-w-full text-left text-xs">
+            <thead class="bg-gray-50 text-gray-600 dark:bg-[#203620] dark:text-gray-300">
+              <tr>
+                <th class="px-3 py-2">Task</th>
+                <th class="px-3 py-2">Status</th>
+                <th class="px-3 py-2">Unique</th>
+                <th class="px-3 py-2">Rejected</th>
+                <th class="px-3 py-2">Started</th>
+              </tr>
+            </thead>
+            <tbody id="runs-body">
+              <tr><td class="px-3 py-4 text-gray-500" colspan="5">Loading runs...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </article>
+
+      <article class="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm xl:col-span-2 dark:border-gray-800 dark:bg-[#1a2e1a]">
+        <div class="mb-3 flex items-center justify-between">
+          <h2 class="text-sm font-black uppercase tracking-wide text-gray-500">Recent Master Updates</h2>
+          <a href="/schemes" class="text-xs font-bold text-primary hover:underline">Browse all</a>
+        </div>
+        <div id="updates-list" class="space-y-2 text-sm">
+          <p class="text-gray-500">Loading updates...</p>
+        </div>
+      </article>
+    </section>
+  </main>
+
+  <script>
+    const chartRefs = {};
+
+    function esc(text) {
+      return String(text || "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/\"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+    }
+
+    function short(text, max = 42) {
+      const t = String(text || "");
+      return t.length > max ? t.slice(0, max - 1) + "..." : t;
+    }
+
+    function toNum(value) {
+      const n = Number(value);
+      return Number.isFinite(n) ? n : 0;
+    }
+
+    function destroyChart(id) {
+      if (chartRefs[id]) {
+        chartRefs[id].destroy();
+        delete chartRefs[id];
+      }
+    }
+
+    function renderChart(id, config) {
+      const canvas = document.getElementById(id);
+      if (!canvas) return;
+      destroyChart(id);
+      chartRefs[id] = new Chart(canvas.getContext("2d"), config);
+    }
+
+    function chartTheme() {
+      const dark = document.documentElement.classList.contains("dark");
+      return {
+        label: dark ? "#cbd5e1" : "#64748b",
+        grid: dark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.06)",
+      };
+    }
+
+    function renderTrendChart(runs) {
+      const theme = chartTheme();
+      const ordered = [...runs].reverse().slice(-12);
+      const labels = ordered.map((run) => String(run.task_id || "-").slice(-6));
+      const unique = ordered.map((run) => toNum((run.stats || {}).run_unique_schemes));
+      const rejected = ordered.map((run) => toNum((run.stats || {}).rejected_noisy_candidates));
+
+      renderChart("trend-chart", {
+        type: "line",
+        data: {
+          labels: labels.length ? labels : ["No data"],
+          datasets: [
+            {
+              label: "Unique Schemes",
+              data: unique.length ? unique : [0],
+              borderColor: "#13ec13",
+              backgroundColor: "rgba(19,236,19,0.18)",
+              tension: 0.3,
+              fill: true,
+              pointRadius: 3,
+            },
+            {
+              label: "Rejected Noise",
+              data: rejected.length ? rejected : [0],
+              borderColor: "#f59e0b",
+              backgroundColor: "rgba(245,158,11,0.15)",
+              tension: 0.3,
+              fill: true,
+              pointRadius: 3,
+            },
+          ],
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { position: "bottom", labels: { color: theme.label, font: { size: 11 } } } },
+          scales: {
+            x: { ticks: { color: theme.label }, grid: { color: theme.grid } },
+            y: { beginAtZero: true, ticks: { color: theme.label }, grid: { color: theme.grid } },
+          },
+        },
+      });
+
+      document.getElementById("trend-meta").textContent = `${ordered.length} run(s)`;
+    }
+
+    function renderStatusChart(runs) {
+      const theme = chartTheme();
+      const counts = {};
+      runs.forEach((run) => {
+        const key = String(run.status || "unknown").toLowerCase();
+        counts[key] = (counts[key] || 0) + 1;
+      });
+      const labels = Object.keys(counts);
+      const values = Object.values(counts);
+
+      renderChart("status-chart", {
+        type: "doughnut",
+        data: {
+          labels: labels.length ? labels : ["no-data"],
+          datasets: [{
+            data: values.length ? values : [1],
+            backgroundColor: ["#13ec13", "#3b82f6", "#f59e0b", "#ef4444", "#8b5cf6"],
+            borderWidth: 2,
+          }],
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { position: "bottom", labels: { color: theme.label, font: { size: 11 } } } },
+        },
+      });
+    }
+
+    function renderTypesChart(topTypes) {
+      const theme = chartTheme();
+      const list = (topTypes || []).slice(0, 8);
+      renderChart("types-chart", {
+        type: "bar",
+        data: {
+          labels: list.length ? list.map((i) => i.scheme_type || "other") : ["No data"],
+          datasets: [{
+            label: "Schemes",
+            data: list.length ? list.map((i) => toNum(i.count)) : [0],
+            backgroundColor: "rgba(59,130,246,0.75)",
+            borderRadius: 8,
+          }],
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { display: false } },
+          scales: {
+            x: { ticks: { color: theme.label }, grid: { display: false } },
+            y: { beginAtZero: true, ticks: { color: theme.label }, grid: { color: theme.grid } },
+          },
+        },
+      });
+    }
+
+    function renderMinistryChart(topMinistries) {
+      const theme = chartTheme();
+      const list = (topMinistries || []).slice(0, 8);
+      renderChart("ministry-chart", {
+        type: "bar",
+        data: {
+          labels: list.length ? list.map((i) => short(i.nodal_ministry || "Unknown", 26)) : ["No data"],
+          datasets: [{
+            label: "Schemes",
+            data: list.length ? list.map((i) => toNum(i.count)) : [0],
+            backgroundColor: "rgba(16,185,129,0.75)",
+            borderRadius: 8,
+          }],
+        },
+        options: {
+          indexAxis: "y",
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { display: false } },
+          scales: {
+            x: { beginAtZero: true, ticks: { color: theme.label }, grid: { color: theme.grid } },
+            y: { ticks: { color: theme.label }, grid: { display: false } },
+          },
+        },
+      });
+    }
+
+    function renderRunsTable(runs) {
+      const body = document.getElementById("runs-body");
+      if (!runs.length) {
+        body.innerHTML = '<tr><td class="px-3 py-4 text-gray-500" colspan="5">No runs found.</td></tr>';
+        return;
+      }
+
+      body.innerHTML = runs.slice(0, 10).map((run) => {
+        const stats = run.stats || {};
+        const stamp = String(run.started_at || "-").replace("T", " ").replace("Z", "");
+        return `
+          <tr class="border-t border-gray-100 dark:border-gray-800">
+            <td class="px-3 py-2 font-semibold">${esc(run.task_id || "-")}</td>
+            <td class="px-3 py-2 capitalize">${esc(run.status || "-")}</td>
+            <td class="px-3 py-2">${toNum(stats.run_unique_schemes)}</td>
+            <td class="px-3 py-2">${toNum(stats.rejected_noisy_candidates)}</td>
+            <td class="px-3 py-2 text-gray-500">${esc(stamp)}</td>
+          </tr>`;
+      }).join("");
+    }
+
+    function renderUpdatesList(items) {
+      const wrap = document.getElementById("updates-list");
+      if (!items.length) {
+        wrap.innerHTML = '<p class="text-gray-500">No recent updates available.</p>';
+        return;
+      }
+
+      wrap.innerHTML = items.slice(0, 8).map((item) => {
+        return `
+          <div class="rounded-xl border border-gray-100 bg-gray-50 p-3 dark:border-gray-800 dark:bg-[#223922]">
+            <p class="font-semibold leading-snug">${esc(short(item.scheme_name || "Scheme", 60))}</p>
+            <p class="mt-1 text-xs text-gray-500 dark:text-gray-300">${esc(item.scheme_type || "other")} · ${toNum(item.confidence_score)}%</p>
+          </div>`;
+      }).join("");
+    }
+
+    async function loadAnalytics() {
+      const [overview, masterOverview, runsPayload, recentSchemes] = await Promise.all([
+        fetch("/api/overview").then((r) => r.json()),
+        fetch("/api/master/overview").then((r) => r.json()),
+        fetch("/api/runs?limit=40").then((r) => r.json()),
+        fetch("/api/master/search?scope=trusted&limit=8&query=").then((r) => r.json()).catch(() => ({ items: [] })),
+      ]);
+
+      const totals = masterOverview.totals || {};
+      const baseTotals = overview.totals || {};
+      const runs = runsPayload.items || [];
+
+      document.getElementById("kpi-master").textContent = toNum(totals.master_schemes || baseTotals.master).toLocaleString();
+      document.getElementById("kpi-curated").textContent = toNum(totals.curated_master || baseTotals.curated).toLocaleString();
+      document.getElementById("kpi-runs").textContent = toNum(baseTotals.runs).toLocaleString();
+      document.getElementById("kpi-sources").textContent = toNum(totals.source_links || baseTotals.sources).toLocaleString();
+      document.getElementById("kpi-media").textContent = toNum(totals.media_links).toLocaleString();
+
+      renderTrendChart(runs);
+      renderStatusChart(runs);
+      renderTypesChart(masterOverview.top_types || overview.top_types || []);
+      renderMinistryChart(masterOverview.top_ministries || []);
+      renderRunsTable(runs);
+      renderUpdatesList(recentSchemes.items || []);
+    }
+
+    async function safeLoad() {
+      try {
+        await loadAnalytics();
+      } catch (error) {
+        if (window.ksToast) {
+          window.ksToast("Failed to load analytics data", "error", "error");
+        }
+      }
+    }
+
+    document.getElementById("refresh-btn").addEventListener("click", safeLoad);
+    safeLoad();
+  </script>
+</body>
+</html>

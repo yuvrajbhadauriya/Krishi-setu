@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html class="light" lang="en" data-page="finder"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<meta name="description" content="Krishi-Setu Scheme Finder: Search hundreds of agricultural schemes, subsidies, and government benefits for Indian farmers."/>
+<title>Krishi-Setu: Scheme Finder</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+  tailwind.config = {
+    darkMode: "class",
+    theme: {
+      extend: {
+        colors: { "primary": "#13ec13", "background-light": "#f6f8f6", "background-dark": "#102210" },
+        fontFamily: { "display": ["Public Sans"] },
+        borderRadius: { "DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px" },
+      },
+    },
+  }
+</script>
+<style>
+  body { font-family: 'Public Sans', sans-serif; min-height: max(884px, 100dvh); }
+  .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+  .no-scrollbar::-webkit-scrollbar { display: none; }
+  .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+  .filter-active { background: #13ec13 !important; color: #111811 !important; border-color: #13ec13 !important; }
+  .filter-chip-active { background: rgba(19,236,19,0.15); border-color: #13ec13; }
+  #filter-panel { transition: transform 0.3s ease, opacity 0.3s ease; }
+  .scheme-skeleton { animation: shimmer 1.5s ease-in-out infinite; }
+  @keyframes shimmer { 0%,100%{opacity:1} 50%{opacity:.4} }
+</style>
+</head>
+<body class="bg-background-light dark:bg-background-dark text-[#111811] dark:text-white min-h-screen">
+
+<script src="/ui/nav.js"></script>
+
+<section class="mx-auto max-w-lg px-4 pt-6">
+  <div class="rounded-2xl border border-gray-200 bg-white/80 p-5 shadow-sm backdrop-blur-sm dark:border-gray-800 dark:bg-[#162c16]/80">
+    <div class="mb-4 flex items-start justify-between gap-3">
+      <div>
+        <p class="text-xs font-black uppercase tracking-[0.22em] text-primary">Scheme Finder</p>
+        <h1 class="mt-1 text-2xl font-bold text-[#111811] dark:text-white">Search agricultural schemes</h1>
+        <p class="mt-1 text-sm text-[#618961]">Krishi-Setu discovery workspace with shared navigation enabled.</p>
+      </div>
+      <button id="filter-toggle-btn" class="flex size-10 items-center justify-center rounded-lg bg-[#f0f4f0] dark:bg-gray-800 hover:bg-primary/20 transition-colors">
+        <span class="material-symbols-outlined">tune</span>
+      </button>
+    </div>
+
+    <div class="mb-4">
+      <div class="flex w-full items-stretch overflow-hidden rounded-lg border border-gray-100 dark:border-gray-700 h-12">
+        <div class="text-[#618961] flex items-center justify-center bg-[#f0f4f0] dark:bg-gray-800 pl-4">
+          <span class="material-symbols-outlined">search</span>
+        </div>
+        <input id="search-input" class="form-input flex w-full min-w-0 flex-1 resize-none border-none bg-[#f0f4f0] dark:bg-gray-800 text-[#111811] dark:text-white focus:ring-0 h-full px-4 pl-2 text-base font-normal placeholder:text-[#618961]" placeholder="Try 'Subsidies for rice in Maharashtra'..." type="text"/>
+        <button id="search-clear-btn" class="hidden bg-[#f0f4f0] dark:bg-gray-800 px-3 text-gray-400 hover:text-red-500 transition-colors">
+          <span class="material-symbols-outlined text-sm">close</span>
+        </button>
+        <button id="search-go-btn" class="bg-primary px-4 text-[#111811] font-bold text-sm hover:bg-primary/90 transition-colors">
+          Go
+        </button>
+      </div>
+    </div>
+
+    <div id="active-filters" class="flex gap-3 overflow-x-auto no-scrollbar">
+      <button id="chip-all" class="filter-active flex h-9 shrink-0 items-center justify-center gap-x-2 rounded-full px-4 text-sm font-semibold" onclick="clearFilters()">
+        All Schemes
+      </button>
+      <button class="quick-filter-chip flex h-9 shrink-0 items-center justify-center gap-x-2 rounded-full bg-[#f0f4f0] dark:bg-gray-800 px-4 hover:bg-primary/10 transition-colors" data-type="income_support">
+        <p class="text-[#111811] dark:text-gray-300 text-sm font-medium">Income Support</p>
+      </button>
+      <button class="quick-filter-chip flex h-9 shrink-0 items-center justify-center gap-x-2 rounded-full bg-[#f0f4f0] dark:bg-gray-800 px-4 hover:bg-primary/10 transition-colors" data-type="insurance">
+        <p class="text-[#111811] dark:text-gray-300 text-sm font-medium">Insurance</p>
+      </button>
+      <button class="quick-filter-chip flex h-9 shrink-0 items-center justify-center gap-x-2 rounded-full bg-[#f0f4f0] dark:bg-gray-800 px-4 hover:bg-primary/10 transition-colors" data-type="subsidy">
+        <p class="text-[#111811] dark:text-gray-300 text-sm font-medium">Subsidy</p>
+      </button>
+      <button class="quick-filter-chip flex h-9 shrink-0 items-center justify-center gap-x-2 rounded-full bg-[#f0f4f0] dark:bg-gray-800 px-4 hover:bg-primary/10 transition-colors" data-type="credit">
+        <p class="text-[#111811] dark:text-gray-300 text-sm font-medium">Credit</p>
+      </button>
+      <button class="quick-filter-chip flex h-9 shrink-0 items-center justify-center gap-x-2 rounded-full bg-[#f0f4f0] dark:bg-gray-800 px-4 hover:bg-primary/10 transition-colors" data-type="organic_farming">
+        <p class="text-[#111811] dark:text-gray-300 text-sm font-medium">Organic</p>
+      </button>
+    </div>
+  </div>
+</section>
+
+<!-- Advanced Filter Panel (Hidden by default) -->
+<div id="filter-panel" class="hidden bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 px-4 py-4 shadow-lg">
+  <h3 class="font-bold text-sm mb-3 flex items-center justify-between">
+    Advanced Filters
+    <button id="filter-close-btn" class="text-gray-400 hover:text-gray-600">
+      <span class="material-symbols-outlined text-sm">close</span>
+    </button>
+  </h3>
+  <div class="grid grid-cols-2 gap-3">
+    <div>
+      <label class="text-xs text-gray-500 font-semibold uppercase tracking-wide mb-1 block">Search Mode</label>
+      <select id="filter-scope" class="w-full text-sm border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 bg-[#f0f4f0] dark:bg-gray-800 focus:ring-primary focus:border-primary">
+        <option value="curated" selected>Curated Only</option>
+        <option value="all">All Schemes</option>
+      </select>
+    </div>
+    <div>
+      <label class="text-xs text-gray-500 font-semibold uppercase tracking-wide mb-1 block">Ministry</label>
+      <select id="filter-ministry" class="w-full text-sm border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 bg-[#f0f4f0] dark:bg-gray-800 focus:ring-primary focus:border-primary">
+        <option value="">All Ministries</option>
+        <option value="Ministry of Agriculture">Agriculture</option>
+        <option value="Ministry of Finance">Finance</option>
+        <option value="Ministry of Water Resources">Water Resources</option>
+        <option value="Ministry of Rural Development">Rural Development</option>
+      </select>
+    </div>
+    <div>
+      <label class="text-xs text-gray-500 font-semibold uppercase tracking-wide mb-1 block">Results per page</label>
+      <select id="filter-limit" class="w-full text-sm border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 bg-[#f0f4f0] dark:bg-gray-800 focus:ring-primary focus:border-primary">
+        <option value="8">8</option>
+        <option value="16">16</option>
+        <option value="30">30</option>
+      </select>
+    </div>
+    <div>
+      <label class="text-xs text-gray-500 font-semibold uppercase tracking-wide mb-1 block">Min. Confidence</label>
+      <input id="filter-min-score" type="range" min="0" max="100" value="0" class="w-full accent-primary">
+      <div class="flex justify-between text-xs text-gray-400 mt-1">
+        <span>0%</span><span id="min-score-val">0%</span><span>100%</span>
+      </div>
+    </div>
+  </div>
+  <button id="apply-filters-btn" class="mt-4 w-full bg-primary text-[#111811] font-bold py-2 rounded-lg hover:bg-primary/90 transition-colors">
+    Apply Filters
+  </button>
+</div>
+
+<main class="p-4 max-w-lg mx-auto pb-24">
+  <!-- Farmer Profile Summary Card -->
+  <div class="mb-6">
+    <div class="flex flex-col items-stretch justify-start rounded-xl shadow-sm border border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900 overflow-hidden">
+      <div class="w-full h-32 bg-center bg-no-repeat bg-cover relative" style="background-image: linear-gradient(135deg, #1a3a1a 0%, #2d5a2d 100%);">
+        <div class="absolute inset-0 flex items-end p-4">
+          <span class="bg-primary text-black text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider">Profile Active</span>
+        </div>
+      </div>
+      <div class="flex w-full flex-col gap-2 p-4">
+        <div class="flex justify-between items-start">
+          <div>
+            <p class="text-[#111811] dark:text-white text-lg font-bold leading-tight">Arjun Singh's Farm</p>
+            <p class="text-[#618961] text-sm font-normal">Nashik, Maharashtra • 2.5 Hectares</p>
+          </div>
+          <button class="flex items-center justify-center rounded-lg h-8 px-3 border border-primary text-primary text-xs font-bold hover:bg-primary/10 transition-colors" onclick="window.location.href='/vault'">
+            Edit Profile
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Results Header -->
+  <div class="flex items-center justify-between mb-4">
+    <h3 id="results-header" class="text-[#111811] dark:text-white text-lg font-bold leading-tight tracking-[-0.015em]">Loading schemes...</h3>
+    <div class="flex items-center gap-1 text-xs text-[#618961]">
+      <span>Sorted by relevance</span>
+      <span class="material-symbols-outlined text-sm">sort</span>
+    </div>
+  </div>
+
+  <!-- Scheme Cards Grid/List -->
+  <div id="scheme-results" class="space-y-4">
+    <div class="text-sm text-gray-500 dark:text-gray-400 py-10 text-center">
+      <span class="material-symbols-outlined text-4xl text-gray-300 block mb-2">agriculture</span>
+      Loading schemes from Krishi-Setu...
+    </div>
+  </div>
+
+  <!-- Load More -->
+  <div class="mt-8 flex justify-center">
+    <button id="load-more-btn" class="text-sm font-bold text-[#618961] flex items-center gap-2 px-6 py-3 rounded-full border border-gray-200 dark:border-gray-700 hover:border-primary hover:text-primary transition-colors">
+      <span>Show more results</span>
+      <span class="material-symbols-outlined text-sm">expand_more</span>
+    </button>
+  </div>
+</main>
+
+<!-- Scheme Detail Modal -->
+<div id="scheme-modal" class="fixed inset-0 z-[80] hidden">
+  <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" id="modal-backdrop"></div>
+  <div class="absolute bottom-0 left-0 right-0 bg-white dark:bg-gray-900 rounded-t-3xl max-h-[85vh] overflow-y-auto p-6">
+    <div class="flex items-center justify-between mb-4">
+      <h3 id="modal-title" class="text-lg font-bold text-[#111811] dark:text-white pr-4"></h3>
+      <button onclick="closeModal()" class="size-8 flex items-center justify-center rounded-full bg-gray-100 dark:bg-gray-800">
+        <span class="material-symbols-outlined text-sm">close</span>
+      </button>
+    </div>
+    <div id="modal-body" class="space-y-4"></div>
+    <div class="mt-6 grid grid-cols-2 gap-3">
+      <button id="modal-finder-btn" class="w-full py-3 rounded-xl border border-primary text-primary font-bold text-sm hover:bg-primary/10 transition-colors" onclick="closeModal()">Close</button>
+      <button id="modal-eligibility-btn" class="w-full py-3 rounded-xl bg-primary text-[#111811] font-bold text-sm hover:bg-primary/90 transition-colors">Check Eligibility</button>
+    </div>
+  </div>
+</div>
+
+<!-- Floating AI Chat Button -->
+<div class="fixed bottom-20 right-6 z-[60]">
+  <button class="flex items-center gap-2 bg-primary text-[#111811] px-4 py-3 rounded-full shadow-xl shadow-primary/40 font-bold border-2 border-white dark:border-gray-900 hover:scale-105 transition-transform" onclick="document.getElementById('search-input').focus(); document.getElementById('search-input').scrollIntoView({behavior:'smooth'})">
+    <span class="material-symbols-outlined">smart_toy</span>
+    <span class="text-sm">Ask Krishi-Setu</span>
+  </button>
+</div>
+
+<script>
+// ── State ──────────────────────────────────────────────────────────────────
+let offset = 0;
+let currentQuery = '';
+let currentType = '';
+let currentScope = 'curated';
+let currentMinistry = '';
+let activeSchemeId = null;
+
+// ── DOM refs ───────────────────────────────────────────────────────────────
+const resultsHeader = document.getElementById('results-header');
+const resultsContainer = document.getElementById('scheme-results');
+const searchInput = document.getElementById('search-input');
+const loadMoreBtn = document.getElementById('load-more-btn');
+const searchClearBtn = document.getElementById('search-clear-btn');
+
+// ── Dark mode persist ──────────────────────────────────────────────────────
+if (localStorage.getItem('ks-dark') === '1') document.documentElement.classList.add('dark');
+
+// ── Filter panel ───────────────────────────────────────────────────────────
+const filterPanel = document.getElementById('filter-panel');
+document.getElementById('filter-toggle-btn').addEventListener('click', () => {
+  filterPanel.classList.toggle('hidden');
+});
+document.getElementById('filter-close-btn').addEventListener('click', () => {
+  filterPanel.classList.add('hidden');
+});
+document.getElementById('filter-min-score').addEventListener('input', (e) => {
+  document.getElementById('min-score-val').textContent = e.target.value + '%';
+});
+document.getElementById('apply-filters-btn').addEventListener('click', () => {
+  currentScope = document.getElementById('filter-scope').value;
+  currentMinistry = document.getElementById('filter-ministry').value;
+  filterPanel.classList.add('hidden');
+  fetchSchemes(true);
+});
+
+// ── Quick filter chips ────────────────────────────────────────────────────
+document.querySelectorAll('.quick-filter-chip').forEach((chip) => {
+  chip.addEventListener('click', () => {
+    const type = chip.dataset.type;
+    if (currentType === type) {
+      currentType = '';
+      clearFilters();
+    } else {
+      currentType = type;
+      document.querySelectorAll('.quick-filter-chip').forEach(c => c.classList.remove('filter-active'));
+      chip.classList.add('filter-active');
+      document.getElementById('chip-all').classList.remove('filter-active');
+      fetchSchemes(true);
+    }
+  });
+});
+
+function clearFilters() {
+  currentType = '';
+  currentQuery = '';
+  searchInput.value = '';
+  searchClearBtn.classList.add('hidden');
+  document.querySelectorAll('.quick-filter-chip').forEach(c => c.classList.remove('filter-active'));
+  document.getElementById('chip-all').classList.add('filter-active');
+  fetchSchemes(true);
+}
+
+// ── Search ─────────────────────────────────────────────────────────────────
+function doSearch() {
+  currentQuery = searchInput.value.trim();
+  if (currentQuery) searchClearBtn.classList.remove('hidden');
+  else searchClearBtn.classList.add('hidden');
+  // Clear type filter when searching
+  currentType = '';
+  document.querySelectorAll('.quick-filter-chip').forEach(c => c.classList.remove('filter-active'));
+  fetchSchemes(true);
+}
+
+searchInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') doSearch(); });
+document.getElementById('search-go-btn').addEventListener('click', doSearch);
+searchClearBtn.addEventListener('click', () => {
+  searchInput.value = '';
+  currentQuery = '';
+  searchClearBtn.classList.add('hidden');
+  fetchSchemes(true);
+});
+
+// Pre-fill from URL ?query= param
+(function() {
+  const params = new URLSearchParams(window.location.search);
+  const q = params.get('query');
+  if (q) {
+    searchInput.value = q;
+    currentQuery = q;
+    searchClearBtn.classList.remove('hidden');
+  }
+})();
+
+// ── Card rendering ─────────────────────────────────────────────────────────
+const typeLabels = {
+  income_support: 'Income Support',
+  credit: 'Credit',
+  organic_farming: 'Organic Farming',
+  insurance: 'Insurance',
+  subsidy: 'Subsidy',
+  other: 'Scheme',
+};
+const typeColors = {
+  income_support: 'bg-blue-100 text-blue-700',
+  credit: 'bg-purple-100 text-purple-700',
+  organic_farming: 'bg-lime-100 text-lime-700',
+  insurance: 'bg-orange-100 text-orange-700',
+  subsidy: 'bg-green-100 text-green-700',
+  other: 'bg-gray-100 text-gray-700',
+};
+
+function escHtml(s) {
+  return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function buildSchemeCard(scheme) {
+  const badge = typeLabels[scheme.scheme_type] || scheme.scheme_type || 'Scheme';
+  const badgeColor = typeColors[scheme.scheme_type] || typeColors.other;
+  const benefit = scheme.benefit_amount || '';
+  const description = scheme.rationale || scheme.objective || scheme.nodal_ministry || 'Learn about this scheme.';
+  const shortDesc = description.length > 110 ? description.slice(0,107) + '...' : description;
+  const conf = scheme.confidence_score;
+  const confBadge = conf >= 70 ? `<span class="text-[10px] text-[#618961] font-bold">${conf}% match</span>` : '';
+
+  return `
+    <div class="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 p-4 shadow-sm hover:shadow-md transition-shadow">
+      <div class="flex justify-between items-start mb-2">
+        <span class="inline-block ${badgeColor} text-[11px] font-bold px-2 py-1 rounded">${escHtml(badge)}</span>
+        <div class="flex items-center gap-2">
+          ${confBadge}
+          ${benefit ? `<div class="text-primary font-bold text-base">${escHtml(benefit.slice(0,25))}</div>` : ''}
+        </div>
+      </div>
+      <h4 class="text-[#111811] dark:text-white font-bold text-base mb-1">${escHtml(scheme.scheme_name)}</h4>
+      <p class="text-[#618961] text-sm mb-4 line-clamp-2">${escHtml(shortDesc)}</p>
+      <div class="grid grid-cols-2 gap-3">
+        <button class="w-full py-2.5 rounded-lg border border-gray-200 dark:border-gray-700 text-sm font-bold text-[#111811] dark:text-white hover:border-primary transition-colors"
+          onclick="openSchemeDetail(${scheme.scheme_id})">View Details</button>
+        <button class="w-full py-2.5 rounded-lg bg-primary text-[#111811] text-sm font-bold shadow-md shadow-primary/20 hover:bg-primary/90 transition-colors"
+          onclick="window.location.href='/eligibility?scheme_id=${scheme.scheme_id}'">Check Eligibility</button>
+      </div>
+    </div>
+  `;
+}
+
+// ── Fetch schemes ──────────────────────────────────────────────────────────
+async function fetchSchemes(reset = false) {
+  const limit = Number(document.getElementById('filter-limit').value) || 8;
+  try {
+    if (reset) {
+      offset = 0;
+      resultsContainer.innerHTML = '<div class="text-sm text-gray-500 dark:text-gray-400 py-10 text-center"><span class="material-symbols-outlined text-4xl text-gray-300 block mb-2 animate-spin">refresh</span>Loading...</div>';
+      loadMoreBtn.style.display = 'none';
+    }
+    const url = new URL('/api/schemes', window.location.origin);
+    url.searchParams.set('scope', currentScope);
+    url.searchParams.set('limit', limit);
+    url.searchParams.set('offset', offset);
+    if (currentQuery) url.searchParams.set('query', currentQuery);
+    if (currentType) url.searchParams.set('scheme_type', currentType);
+    if (currentMinistry) url.searchParams.set('ministry', currentMinistry);
+
+    const response = await fetch(url);
+    const data = await response.json();
+
+    if (reset) resultsContainer.innerHTML = '';
+
+    if (!data.items || data.items.length === 0) {
+      if (reset) {
+        resultsContainer.innerHTML = `
+          <div class="text-center py-12">
+            <span class="material-symbols-outlined text-5xl text-gray-300 block mb-3">search_off</span>
+            <p class="text-gray-500 font-semibold">No matching schemes found.</p>
+            <p class="text-xs text-gray-400 mt-1">Try different keywords or clear filters.</p>
+            <button onclick="clearFilters()" class="mt-4 px-4 py-2 bg-primary text-[#111811] font-bold rounded-lg text-sm">Clear Filters</button>
+          </div>`;
+      }
+      loadMoreBtn.style.display = 'none';
+      resultsHeader.textContent = `Found ${data.total || 0} Schemes`;
+      return;
+    }
+
+    data.items.forEach((scheme) => {
+      resultsContainer.insertAdjacentHTML('beforeend', buildSchemeCard(scheme));
+    });
+
+    resultsHeader.textContent = `Found ${data.total || data.items.length} Schemes`;
+    offset += data.items.length;
+    loadMoreBtn.style.display = offset < (data.total || 0) ? 'inline-flex' : 'none';
+  } catch (error) {
+    if (reset) {
+      resultsContainer.innerHTML = '<div class="text-sm text-red-600 dark:text-red-400 py-10 text-center">Unable to load schemes. <button onclick="fetchSchemes(true)" class="underline">Retry</button></div>';
+    }
+    loadMoreBtn.style.display = 'none';
+    console.error(error);
+  }
+}
+
+loadMoreBtn.addEventListener('click', () => fetchSchemes(false));
+
+// ── Scheme Detail Modal ────────────────────────────────────────────────────
+async function openSchemeDetail(schemeId) {
+  activeSchemeId = schemeId;
+  const modal = document.getElementById('scheme-modal');
+  const modalTitle = document.getElementById('modal-title');
+  const modalBody = document.getElementById('modal-body');
+  modal.classList.remove('hidden');
+  document.body.style.overflow = 'hidden';
+  modalTitle.textContent = 'Loading...';
+  modalBody.innerHTML = '<div class="text-center py-8"><span class="material-symbols-outlined animate-spin text-primary text-3xl">refresh</span></div>';
+
+  try {
+    const res = await fetch(`/api/schemes/${schemeId}`);
+    const data = await res.json();
+    modalTitle.textContent = data.scheme_name || 'Scheme Detail';
+
+    const elRules = (data.eligibility_rules || []).slice(0,4);
+    const docs = (data.requirements || []).slice(0,4);
+    const facts = (data.key_facts || []).slice(0,3);
+
+    modalBody.innerHTML = `
+      ${data.objective ? `<p class="text-sm text-gray-600 dark:text-gray-400">${escHtml(data.objective)}</p>` : ''}
+      ${data.benefit_amount ? `<div class="flex items-center gap-2 bg-primary/10 rounded-xl px-4 py-3"><span class="material-symbols-outlined text-primary">payments</span><div><p class="text-xs text-gray-500 uppercase tracking-wide">Benefit</p><p class="font-bold text-primary">${escHtml(data.benefit_amount)}</p></div></div>` : ''}
+      ${data.nodal_ministry ? `<div class="flex items-center gap-2"><span class="material-symbols-outlined text-gray-400 text-sm">account_balance</span><span class="text-sm text-gray-600 dark:text-gray-300">${escHtml(data.nodal_ministry)}</span></div>` : ''}
+      ${elRules.length ? `<div><p class="text-xs font-bold uppercase tracking-wide text-gray-500 mb-2">Eligibility</p><ul class="space-y-1">${elRules.map(r => `<li class="flex items-start gap-2 text-sm"><span class="material-symbols-outlined text-primary text-base mt-0.5">check_circle</span><span>${escHtml(r)}</span></li>`).join('')}</ul></div>` : ''}
+      ${docs.length ? `<div><p class="text-xs font-bold uppercase tracking-wide text-gray-500 mb-2">Documents Required</p><ul class="space-y-1">${docs.map(d => `<li class="flex items-start gap-2 text-sm"><span class="material-symbols-outlined text-gray-400 text-base mt-0.5">description</span><span>${escHtml(d)}</span></li>`).join('')}</ul></div>` : ''}
+      ${facts.length ? `<div><p class="text-xs font-bold uppercase tracking-wide text-gray-500 mb-2">Key Facts</p><ul class="space-y-1">${facts.map(f => `<li class="text-sm text-gray-600 dark:text-gray-400">• ${escHtml(f)}</li>`).join('')}</ul></div>` : ''}
+      ${data.official_website ? `<a href="${escHtml(data.official_website)}" target="_blank" rel="noreferrer" class="flex items-center gap-2 text-primary text-sm font-semibold hover:underline"><span class="material-symbols-outlined text-sm">open_in_new</span>Visit Official Website</a>` : ''}
+    `;
+
+    document.getElementById('modal-eligibility-btn').onclick = () => {
+      window.location.href = `/eligibility?scheme_id=${schemeId}`;
+    };
+  } catch {
+    modalBody.innerHTML = '<p class="text-sm text-red-500">Unable to load scheme details.</p>';
+  }
+}
+
+function closeModal() {
+  document.getElementById('scheme-modal').classList.add('hidden');
+  document.body.style.overflow = '';
+  activeSchemeId = null;
+}
+
+document.getElementById('modal-backdrop').addEventListener('click', closeModal);
+
+// ── Init ───────────────────────────────────────────────────────────────────
+fetchSchemes(true);
+</script>
+</body></html>

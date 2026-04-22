@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+<html class="light" lang="en" data-page="master"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<meta name="description" content="Krishi-Setu Admin Dashboard - Monitor scheme extraction, crawl runs, and manage the agricultural scheme index."/>
+<title>Krishi-Setu Admin Dashboard</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+  tailwind.config = {
+    darkMode: "class",
+    theme: {
+      extend: {
+        colors: { "primary": "#13ec13", "background-light": "#f6f8f6", "background-dark": "#102210" },
+        fontFamily: { "display": ["Public Sans"] },
+        borderRadius: { "DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px" },
+      },
+    },
+  }
+</script>
+<style>
+  body { min-height: max(884px, 100dvh); }
+  .sidebar-open { transform: translateX(0) !important; }
+  .sidebar-overlay-open { opacity: 1 !important; pointer-events: auto !important; }
+  #sidebar { transition: transform 0.3s ease; }
+  #sidebar-overlay { transition: opacity 0.3s ease; }
+  .metric-card:hover { transform: translateY(-2px); box-shadow: 0 8px 30px rgba(19,236,19,0.1); }
+  .metric-card { transition: transform 0.2s, box-shadow 0.2s; }
+  .tab-active { background: #13ec13; color: #111811; }
+  .scheme-row:hover { background: rgba(19,236,19,0.05); }
+  table { width: 100%; border-collapse: collapse; font-size: 0.75rem; }
+  th, td { padding: 0.5rem 0.75rem; text-align: left; border-bottom: 1px solid rgba(0,0,0,0.05); }
+  th { font-weight: 700; text-transform: uppercase; font-size: 0.65rem; letter-spacing: 0.05em; color: #618961; background: rgba(19,236,19,0.04); }
+  .dark th { border-color: rgba(255,255,255,0.05); background: rgba(19,236,19,0.06); }
+  .dark td { border-color: rgba(255,255,255,0.05); }
+  tr:last-child td { border-bottom: none; }
+  input, select { background: #f0f4f0; }
+  .dark input, .dark select { background: #1f2f1f; border-color: #2d4a2d; color: white; }
+</style>
+</head>
+<body class="bg-background-light dark:bg-background-dark font-display text-[#111811] dark:text-white transition-colors duration-300">
+
+<script src="/ui/nav.js"></script>
+
+<div class="relative flex h-auto min-h-screen w-full flex-col overflow-x-hidden">
+
+  <!-- Main Content -->
+  <main class="flex-1 overflow-y-auto">
+
+    <!-- Dashboard Intro -->
+    <div class="p-4 pt-6">
+      <div class="flex flex-col gap-4 rounded-2xl border border-gray-200 bg-white/80 p-5 shadow-sm backdrop-blur-sm dark:border-gray-800 dark:bg-[#1a2e1a]/80 md:flex-row md:items-center md:justify-between">
+        <div>
+          <p class="text-xs font-black uppercase tracking-[0.22em] text-primary">Admin Workspace</p>
+          <h1 class="mt-1 text-2xl font-bold dark:text-white">Admin Dashboard</h1>
+          <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Krishi-Setu DPI platform monitoring with shared navigation enabled.</p>
+        </div>
+        <div class="flex items-center gap-2">
+          <button id="refresh-all-btn" class="inline-flex size-10 items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors" title="Refresh all data">
+            <span class="material-symbols-outlined" id="refresh-icon">refresh</span>
+          </button>
+          <div class="relative inline-flex size-10 items-center justify-center rounded-full bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-200">
+            <span class="material-symbols-outlined">notifications</span>
+            <span id="notif-dot" class="hidden absolute top-2 right-2 size-2 rounded-full bg-primary"></span>
+          </div>
+          <a href="/crawler" class="inline-flex items-center gap-2 rounded-lg border border-primary/20 bg-primary/10 px-3 py-2 text-sm font-bold text-[#111811] transition-colors hover:bg-primary/20 dark:text-primary">
+            <span class="material-symbols-outlined text-sm">travel_explore</span>
+            Crawl Control
+          </a>
+        </div>
+      </div>
+      <div id="last-updated" class="mt-2 text-xs text-gray-400 hidden">Updated just now</div>
+    </div>
+
+    <!-- Key Metrics Cards -->
+    <div class="flex gap-4 overflow-x-auto px-4 pb-4 no-scrollbar">
+      <div class="metric-card flex min-w-[200px] flex-1 flex-col gap-3 rounded-xl p-5 bg-white dark:bg-[#1a2e1a] border border-[#dbe6db] dark:border-gray-800 shadow-sm cursor-pointer" onclick="document.getElementById('master-search-section').scrollIntoView({behavior:'smooth'})">
+        <div class="flex justify-between items-start">
+          <div class="p-2 bg-primary/10 rounded-lg"><span class="material-symbols-outlined text-[#078823] dark:text-primary">account_balance</span></div>
+          <span id="metric-schemes-badge" class="text-[#078823] text-sm font-bold bg-[#f0fdf4] px-2 py-0.5 rounded-full">—</span>
+        </div>
+        <div>
+          <p class="text-gray-500 dark:text-gray-400 text-sm font-medium">Schemes Indexed</p>
+          <p id="metric-schemes" class="text-2xl font-bold mt-1">—</p>
+        </div>
+      </div>
+      <div class="metric-card flex min-w-[200px] flex-1 flex-col gap-3 rounded-xl p-5 bg-white dark:bg-[#1a2e1a] border border-[#dbe6db] dark:border-gray-800 shadow-sm">
+        <div class="flex justify-between items-start">
+          <div class="p-2 bg-primary/10 rounded-lg"><span class="material-symbols-outlined text-[#078823] dark:text-primary">verified</span></div>
+          <span class="text-[#078823] text-sm font-bold bg-[#f0fdf4] px-2 py-0.5 rounded-full">Master</span>
+        </div>
+        <div>
+          <p class="text-gray-500 dark:text-gray-400 text-sm font-medium">Curated Schemes</p>
+          <p id="metric-curated" class="text-2xl font-bold mt-1">—</p>
+        </div>
+      </div>
+      <div class="metric-card flex min-w-[200px] flex-1 flex-col gap-3 rounded-xl p-5 bg-white dark:bg-[#1a2e1a] border border-[#dbe6db] dark:border-gray-800 shadow-sm cursor-pointer" onclick="window.location.href='/crawler'">
+        <div class="flex justify-between items-start">
+          <div class="p-2 bg-primary/10 rounded-lg"><span class="material-symbols-outlined text-[#078823] dark:text-primary">travel_explore</span></div>
+          <span id="metric-runs-badge" class="text-[#078823] text-sm font-bold bg-[#f0fdf4] px-2 py-0.5 rounded-full">—</span>
+        </div>
+        <div>
+          <p class="text-gray-500 dark:text-gray-400 text-sm font-medium">Crawl Runs</p>
+          <p id="metric-runs" class="text-2xl font-bold mt-1">—</p>
+        </div>
+      </div>
+      <div class="metric-card flex min-w-[200px] flex-1 flex-col gap-3 rounded-xl p-5 bg-white dark:bg-[#1a2e1a] border border-[#dbe6db] dark:border-gray-800 shadow-sm">
+        <div class="flex justify-between items-start">
+          <div class="p-2 bg-primary/10 rounded-lg"><span class="material-symbols-outlined text-[#078823] dark:text-primary">link</span></div>
+          <span class="text-[#078823] text-sm font-bold bg-[#f0fdf4] px-2 py-0.5 rounded-full">Sources</span>
+        </div>
+        <div>
+          <p class="text-gray-500 dark:text-gray-400 text-sm font-medium">Source Links</p>
+          <p id="metric-sources" class="text-2xl font-bold mt-1">—</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Chart Section -->
+    <div class="px-4 py-4">
+      <div class="bg-white dark:bg-[#1a2e1a] rounded-xl border border-[#dbe6db] dark:border-gray-800 p-5 shadow-sm">
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="text-lg font-bold">Scheme Extraction Trend</h3>
+          <div class="flex gap-2">
+            <button class="chart-tab tab-active text-xs font-bold px-3 py-1 rounded-full transition-colors" data-chart="trend" onclick="switchChart('trend', this)">Trend</button>
+            <button class="chart-tab text-xs font-medium px-3 py-1 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 transition-colors" data-chart="types" onclick="switchChart('types', this)">By Type</button>
+            <button class="chart-tab text-xs font-medium px-3 py-1 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 transition-colors" data-chart="status" onclick="switchChart('status', this)">Status</button>
+          </div>
+        </div>
+        <div class="relative h-48">
+          <canvas id="main-chart"></canvas>
+          <div id="chart-loading" class="absolute inset-0 flex items-center justify-center bg-white/50 dark:bg-[#1a2e1a]/50">
+            <span class="material-symbols-outlined text-primary text-3xl animate-spin">refresh</span>
+          </div>
+        </div>
+        <div id="chart-meta" class="text-xs text-gray-400 mt-2">Loading chart data...</div>
+      </div>
+    </div>
+
+    <!-- Top Scheme Types -->
+    <div class="px-4 py-2">
+      <div class="bg-white dark:bg-[#1a2e1a] rounded-xl border border-[#dbe6db] dark:border-gray-800 p-4 shadow-sm">
+        <h3 class="font-bold mb-3">Scheme Types Distribution</h3>
+        <div id="type-pills" class="flex flex-wrap gap-2">
+          <span class="text-xs text-gray-400">Loading...</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Recent Runs / Queries -->
+    <div class="px-4 py-4 mb-20">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="text-lg font-bold">Recent Crawl Runs</h3>
+        <button class="text-primary text-sm font-semibold hover:underline" onclick="window.location.href='/crawler'">View All →</button>
+      </div>
+      <div id="recent-runs-container" class="space-y-3">
+        <div class="text-center py-8">
+          <span class="material-symbols-outlined text-3xl text-gray-300 block mb-2 animate-spin">refresh</span>
+          <p class="text-sm text-gray-400">Loading recent runs...</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Master Data Search Section -->
+    <div id="master-search-section" class="px-4 py-4 mb-4">
+      <div class="bg-white dark:bg-[#1a2e1a] rounded-xl border border-[#dbe6db] dark:border-gray-800 shadow-sm overflow-hidden">
+        <div class="p-4 bg-primary/5 border-b border-primary/10 flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <span class="material-symbols-outlined text-primary">manage_search</span>
+            <h3 class="font-bold">Master Scheme Search</h3>
+          </div>
+          <button onclick="document.getElementById('search-form-body').classList.toggle('hidden')" class="text-xs text-primary font-bold flex items-center gap-1">
+            <span class="material-symbols-outlined text-sm">expand_more</span>
+          </button>
+        </div>
+        <div id="search-form-body">
+          <form id="masterQueryForm" class="p-4 space-y-3">
+            <div class="flex gap-3">
+              <input id="masterQueryText" class="flex-1 border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 text-sm focus:ring-primary focus:border-primary" placeholder="Search schemes, e.g. 'pm kisan'"/>
+              <button type="submit" class="bg-primary text-[#111811] font-bold px-4 py-2 rounded-lg text-sm hover:bg-primary/90 transition-colors">Search</button>
+              <button type="button" id="masterClearBtn" class="border border-gray-200 dark:border-gray-700 text-sm px-4 py-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">Clear</button>
+            </div>
+            <div class="grid grid-cols-2 gap-3 md:grid-cols-4">
+              <input id="masterQueryMinistry" class="border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 text-sm focus:ring-primary focus:border-primary" placeholder="Ministry filter"/>
+              <select id="masterQueryType" class="border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 text-sm focus:ring-primary focus:border-primary">
+                <option value="">All Types</option>
+                <option value="income_support">Income Support</option>
+                <option value="insurance">Insurance</option>
+                <option value="credit">Credit</option>
+                <option value="subsidy">Subsidy</option>
+                <option value="organic_farming">Organic Farming</option>
+                <option value="other">Other</option>
+              </select>
+              <select id="masterQueryScope" class="border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 text-sm focus:ring-primary focus:border-primary">
+                <option value="trusted">Trusted</option>
+                <option value="curated">Curated</option>
+                <option value="all">All</option>
+                <option value="strict">Strict</option>
+                <option value="balanced">Balanced</option>
+                <option value="raw">Raw</option>
+              </select>
+              <select id="masterQueryMode" class="border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 text-sm focus:ring-primary focus:border-primary">
+                <option value="smart">Smart</option>
+                <option value="keyword">Keyword</option>
+              </select>
+            </div>
+            <div class="flex gap-3">
+              <div class="flex items-center gap-2">
+                <label class="text-xs text-gray-500">Min Score:</label>
+                <input id="masterQueryMinScore" type="number" min="0" max="100" value="0" class="w-16 border border-gray-200 dark:border-gray-700 rounded-lg px-2 py-1 text-sm focus:ring-primary"/>
+              </div>
+              <div class="flex items-center gap-2">
+                <label class="text-xs text-gray-500">Per Page:</label>
+                <select id="masterQueryLimit" class="border border-gray-200 dark:border-gray-700 rounded-lg px-2 py-1 text-sm focus:ring-primary">
+                  <option value="10">10</option>
+                  <option value="20">20</option>
+                  <option value="50">50</option>
+                  <option value="100">100</option>
+                </select>
+              </div>
+            </div>
+          </form>
+
+          <!-- Metrics Row -->
+          <div class="px-4 pb-3 flex flex-wrap gap-4 text-sm">
+            <span class="flex items-center gap-1 text-gray-500"><span class="material-symbols-outlined text-primary text-sm">database</span>Master: <strong id="masterMetricTotal">—</strong></span>
+            <span class="flex items-center gap-1 text-gray-500"><span class="material-symbols-outlined text-primary text-sm">verified</span>Curated: <strong id="masterMetricCurated">—</strong></span>
+            <span class="flex items-center gap-1 text-gray-500"><span class="material-symbols-outlined text-primary text-sm">link</span>Sources: <strong id="masterMetricSources">—</strong></span>
+            <span class="flex items-center gap-1 text-gray-500"><span class="material-symbols-outlined text-primary text-sm">perm_media</span>Media: <strong id="masterMetricMedia">—</strong></span>
+            <span class="flex items-center gap-1 text-gray-500"><span class="material-symbols-outlined text-primary text-sm">history</span>Versions: <strong id="masterMetricVersions">—</strong></span>
+          </div>
+
+          <!-- Results Meta -->
+          <div class="px-4 pb-2">
+            <p id="masterResultsMeta" class="text-xs text-gray-500 dark:text-gray-400">Loading...</p>
+          </div>
+
+          <!-- Results Table -->
+          <div class="overflow-x-auto border-t border-gray-100 dark:border-gray-800">
+            <table>
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Scheme Name</th>
+                  <th>Type</th>
+                  <th>Ministry</th>
+                  <th>Score</th>
+                  <th>Sources</th>
+                  <th>Media</th>
+                  <th>Match Reason</th>
+                  <th>Updated</th>
+                </tr>
+              </thead>
+              <tbody id="masterRows">
+                <tr><td colspan="9" class="text-center py-6 text-gray-400">Loading master schemes...</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Pagination -->
+          <div class="p-4 flex items-center justify-between border-t border-gray-100 dark:border-gray-800">
+            <button id="masterPrevBtn" class="px-4 py-2 text-sm font-bold border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors disabled:opacity-40 disabled:cursor-not-allowed" disabled>← Previous</button>
+            <div class="text-center">
+              <p id="masterPageInfo" class="text-sm font-medium">Page 1 / 1</p>
+              <p id="masterPagerHint" class="text-xs text-gray-400 mt-0.5"></p>
+            </div>
+            <button id="masterNextBtn" class="px-4 py-2 text-sm font-bold border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors disabled:opacity-40 disabled:cursor-not-allowed">Next →</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Curated Refresh Actions -->
+    <div class="px-4 pb-4">
+      <div class="bg-white dark:bg-[#1a2e1a] rounded-xl border border-[#dbe6db] dark:border-gray-800 p-4 shadow-sm">
+        <h3 class="font-bold mb-3 flex items-center gap-2">
+          <span class="material-symbols-outlined text-primary text-sm">build</span>
+          Index Management
+        </h3>
+        <div class="flex gap-3 flex-wrap">
+          <button id="refresh-curated-btn" class="flex items-center gap-2 px-4 py-2 bg-primary text-[#111811] font-bold rounded-lg text-sm hover:bg-primary/90 transition-colors">
+            <span class="material-symbols-outlined text-sm">refresh</span>
+            Rebuild Curated Index
+          </button>
+          <button id="refresh-master-btn" class="flex items-center gap-2 px-4 py-2 border border-primary text-primary font-bold rounded-lg text-sm hover:bg-primary/10 transition-colors">
+            <span class="material-symbols-outlined text-sm">database</span>
+            Rebuild Master Index
+          </button>
+          <a href="/crawler" class="flex items-center gap-2 px-4 py-2 border border-gray-200 dark:border-gray-700 font-bold rounded-lg text-sm hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+            <span class="material-symbols-outlined text-sm">travel_explore</span>
+            Start New Crawl
+          </a>
+        </div>
+        <p id="action-result" class="text-xs text-gray-400 mt-3"></p>
+      </div>
+    </div>
+
+    <!-- Ministry & Type Breakdown Charts -->
+    <div class="px-4 pb-8">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div class="bg-white dark:bg-[#1a2e1a] rounded-xl border border-[#dbe6db] dark:border-gray-800 p-4 shadow-sm">
+          <h3 class="font-bold mb-3 flex items-center gap-2 text-sm">
+            <span class="material-symbols-outlined text-primary text-sm">account_balance</span>
+            Top Ministries
+          </h3>
+          <div class="relative h-48">
+            <canvas id="masterMinistryChart"></canvas>
+          </div>
+          <table class="w-full mt-3">
+            <tbody id="masterMinistryRows"></tbody>
+          </table>
+        </div>
+        <div class="bg-white dark:bg-[#1a2e1a] rounded-xl border border-[#dbe6db] dark:border-gray-800 p-4 shadow-sm">
+          <h3 class="font-bold mb-3 flex items-center gap-2 text-sm">
+            <span class="material-symbols-outlined text-primary text-sm">category</span>
+            Scheme Types
+          </h3>
+          <div class="relative h-48">
+            <canvas id="masterTypeChart"></canvas>
+          </div>
+          <table class="w-full mt-3">
+            <tbody id="masterTypeRows"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+</div>
+
+<script>
+// ── Dark mode ──────────────────────────────────────────────────────────────
+if (localStorage.getItem('ks-dark') === '1') document.documentElement.classList.add('dark');
+
+// ── Toast ──────────────────────────────────────────────────────────────────
+function showToast(msg, icon = 'info') {
+  const t = document.createElement('div');
+  t.className = 'fixed top-4 right-4 z-[100] bg-[#111811] dark:bg-white text-white dark:text-[#111811] px-4 py-3 rounded-xl shadow-xl flex items-center gap-2 text-sm font-semibold';
+  t.innerHTML = `<span class="material-symbols-outlined text-primary text-sm">${icon}</span>${msg}`;
+  document.body.appendChild(t);
+  setTimeout(() => { t.classList.add('opacity-0','transition-opacity','duration-500'); }, 2000);
+  setTimeout(() => t.remove(), 2600);
+}
+
+// ── Chart state ────────────────────────────────────────────────────────────
+let mainChart = null;
+let chartData = { runs: [], topTypes: [], runStatuses: {} };
+let activeChartMode = 'trend';
+
+function switchChart(mode, btn) {
+  activeChartMode = mode;
+  document.querySelectorAll('.chart-tab').forEach(b => {
+    b.className = 'chart-tab text-xs font-medium px-3 py-1 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 transition-colors';
+  });
+  btn.className = 'chart-tab tab-active text-xs font-bold px-3 py-1 rounded-full transition-colors';
+  renderChart(mode);
+}
+
+function renderChart(mode) {
+  const canvas = document.getElementById('main-chart');
+  const loading = document.getElementById('chart-loading');
+  const meta = document.getElementById('chart-meta');
+  if (!canvas) return;
+  if (mainChart) { mainChart.destroy(); mainChart = null; }
+
+  const isDark = document.documentElement.classList.contains('dark');
+  const gridColor = isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)';
+  const labelColor = isDark ? '#9ca3af' : '#6b7280';
+
+  if (mode === 'trend') {
+    const runs = [...chartData.runs].reverse().slice(-10);
+    const labels = runs.map((r, i) => `Run ${i + 1}`);
+    const unique = runs.map(r => Number((r.stats || {}).run_unique_schemes || 0));
+    const rejected = runs.map(r => Number((r.stats || {}).rejected_noisy_candidates || 0));
+    meta.textContent = `Last ${runs.length} crawl runs · Unique schemes vs rejected noise`;
+    mainChart = new Chart(canvas, {
+      type: 'line',
+      data: {
+        labels: labels.length ? labels : ['No data'],
+        datasets: [
+          { label: 'Unique Schemes', data: unique.length ? unique : [0], borderColor: '#13ec13', backgroundColor: 'rgba(19,236,19,0.15)', tension: 0.3, fill: true, pointRadius: 4 },
+          { label: 'Rejected Noise', data: rejected.length ? rejected : [0], borderColor: '#f59e0b', backgroundColor: 'rgba(245,158,11,0.1)', tension: 0.3, fill: true, pointRadius: 4 },
+        ],
+      },
+      options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { color: labelColor, font: { size: 10 } } } }, scales: { x: { ticks: { color: labelColor, font: { size: 10 } }, grid: { color: gridColor } }, y: { beginAtZero: true, ticks: { color: labelColor, font: { size: 10 } }, grid: { color: gridColor } } } },
+    });
+  } else if (mode === 'types') {
+    const types = chartData.topTypes.slice(0, 6);
+    meta.textContent = `Top ${types.length} scheme types by count`;
+    mainChart = new Chart(canvas, {
+      type: 'bar',
+      data: {
+        labels: types.length ? types.map(t => t.scheme_type || 'other') : ['No data'],
+        datasets: [{ label: 'Schemes', data: types.length ? types.map(t => Number(t.count)) : [0], backgroundColor: 'rgba(19,236,19,0.7)', borderRadius: 6 }],
+      },
+      options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { ticks: { color: labelColor, font: { size: 10 } }, grid: { display: false } }, y: { beginAtZero: true, ticks: { color: labelColor, font: { size: 10 } }, grid: { color: gridColor } } } },
+    });
+  } else if (mode === 'status') {
+    const entries = Object.entries(chartData.runStatuses);
+    meta.textContent = `Crawl run status distribution`;
+    mainChart = new Chart(canvas, {
+      type: 'doughnut',
+      data: {
+        labels: entries.length ? entries.map(([k]) => k) : ['No data'],
+        datasets: [{ data: entries.length ? entries.map(([, v]) => v) : [1], backgroundColor: ['#13ec13','#f59e0b','#ef4444','#3b82f6','#8b5cf6'], borderColor: isDark ? '#1a2e1a' : '#fff', borderWidth: 2 }],
+      },
+      options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { color: labelColor, font: { size: 10 } } } } },
+    });
+  }
+  loading.classList.add('hidden');
+}
+
+// ── Recent runs ────────────────────────────────────────────────────────────
+const STATUS_COLORS = {
+  completed: 'bg-[#f0fdf4] text-[#078823]',
+  running: 'bg-blue-50 text-blue-700',
+  queued: 'bg-gray-100 text-gray-600',
+  failed: 'bg-red-50 text-red-600',
+};
+
+function renderRecentRuns(runs) {
+  const container = document.getElementById('recent-runs-container');
+  if (!runs.length) {
+    container.innerHTML = `<div class="text-center py-8"><span class="material-symbols-outlined text-3xl text-gray-300 block mb-2">history</span><p class="text-sm text-gray-400">No runs yet. <a href="/crawler" class="text-primary font-semibold">Start a crawl →</a></p></div>`;
+    return;
+  }
+  document.getElementById('notif-dot').classList.remove('hidden');
+  container.innerHTML = runs.slice(0, 5).map(run => {
+    const stats = run.stats || {};
+    const statusCls = STATUS_COLORS[run.status] || STATUS_COLORS.queued;
+    const uniqueSchemes = stats.run_unique_schemes ?? '-';
+    const rejected = stats.rejected_noisy_candidates ?? '-';
+    const ts = (run.started_at || run.created_at || '').replace('T',' ').replace('Z','');
+    const url = run.source_url || '';
+    const shortUrl = url.length > 50 ? url.slice(0, 47) + '...' : url;
+    return `
+      <div class="bg-white dark:bg-[#1a2e1a] rounded-xl border border-[#dbe6db] dark:border-gray-800 p-4 shadow-sm hover:shadow-md transition-shadow">
+        <div class="flex justify-between items-start mb-2">
+          <div class="flex items-center gap-2">
+            <span class="material-symbols-outlined text-gray-400 text-lg">schedule</span>
+            <span class="text-xs text-gray-500 dark:text-gray-400">${ts || 'Unknown time'}</span>
+          </div>
+          <span class="text-[10px] font-bold px-2 py-0.5 rounded uppercase ${statusCls}">${run.status || 'unknown'}</span>
+        </div>
+        <p class="text-sm font-semibold mb-1 truncate" title="${url}">${shortUrl || run.task_id || 'Crawl job'}</p>
+        <div class="flex gap-4 text-xs text-gray-500 mt-2">
+          <span class="flex items-center gap-1"><span class="material-symbols-outlined text-primary text-xs">verified</span>${uniqueSchemes} unique schemes</span>
+          <span class="flex items-center gap-1"><span class="material-symbols-outlined text-orange-400 text-xs">cancel</span>${rejected} rejected</span>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+// ── Type pills ─────────────────────────────────────────────────────────────
+const TYPE_PILL_COLORS = [
+  'bg-blue-50 text-blue-700','bg-orange-50 text-orange-700','bg-green-50 text-green-700',
+  'bg-purple-50 text-purple-700','bg-lime-50 text-lime-700','bg-pink-50 text-pink-700',
+];
+function renderTypePills(types) {
+  const el = document.getElementById('type-pills');
+  if (!types.length) { el.innerHTML = '<span class="text-xs text-gray-400">No data</span>'; return; }
+  el.innerHTML = types.map((t, i) => {
+    const cls = TYPE_PILL_COLORS[i % TYPE_PILL_COLORS.length];
+    return `<button class="text-xs font-bold px-3 py-1.5 rounded-full ${cls} hover:opacity-80 transition-opacity" onclick="document.getElementById('masterQueryType').value='${t.scheme_type || ''}'; document.getElementById('master-search-section').scrollIntoView({behavior:'smooth'}); if (window.bootstrapMasterPage) window.bootstrapMasterPage().catch(()=>{})">${t.scheme_type || 'other'} <span class="opacity-70">(${t.count})</span></button>`;
+  }).join('');
+}
+
+// ── Load dashboard data ────────────────────────────────────────────────────
+async function loadDashboard() {
+  const refreshIcon = document.getElementById('refresh-icon');
+  refreshIcon.classList.add('animate-spin');
+
+  try {
+    const [overview, runsPayload, masterOverview] = await Promise.all([
+      fetch('/api/overview').then(r => r.json()).catch(() => ({ totals: {}, latest_run: null, top_types: [] })),
+      fetch('/api/runs?limit=30').then(r => r.json()).catch(() => ({ items: [] })),
+      fetch('/api/master/overview').then(r => r.json()).catch(() => ({ totals: {}, top_types: [], top_ministries: [] })),
+    ]);
+
+    const totals = overview.totals || {};
+    const masterTotals = masterOverview.totals || {};
+
+    // Metrics
+    document.getElementById('metric-schemes').textContent = (totals.schemes || '—').toLocaleString();
+    document.getElementById('metric-curated').textContent = (totals.curated || masterTotals.curated_master || '—').toLocaleString();
+    document.getElementById('metric-runs').textContent = (totals.runs || '—').toLocaleString();
+    document.getElementById('metric-sources').textContent = (totals.sources || masterTotals.source_links || '—').toLocaleString();
+    document.getElementById('metric-schemes-badge').textContent = totals.master ? `+${totals.master} master` : 'Indexed';
+    document.getElementById('metric-runs-badge').textContent = totals.runs > 0 ? 'Active' : 'No runs';
+
+    // Master search metrics
+    document.getElementById('masterMetricTotal').textContent = masterTotals.master_schemes || totals.master || '—';
+    document.getElementById('masterMetricCurated').textContent = masterTotals.curated_master || totals.curated || '—';
+    document.getElementById('masterMetricSources').textContent = masterTotals.source_links || totals.sources || '—';
+    document.getElementById('masterMetricMedia').textContent = masterTotals.media_links || '—';
+    document.getElementById('masterMetricVersions').textContent = masterTotals.versions || '—';
+
+    // Chart data
+    const runs = runsPayload.items || [];
+    const runStatuses = {};
+    runs.forEach(r => { const k = r.status || 'unknown'; runStatuses[k] = (runStatuses[k] || 0) + 1; });
+    chartData = { runs, topTypes: overview.top_types || masterOverview.top_types || [], runStatuses };
+    renderChart(activeChartMode);
+    renderTypePills(chartData.topTypes.slice(0, 8));
+
+    // Recent runs
+    renderRecentRuns(runs);
+
+    // Last updated
+    const lastEl = document.getElementById('last-updated');
+    lastEl.textContent = 'Updated ' + new Date().toLocaleTimeString();
+    lastEl.classList.remove('hidden');
+
+  } catch (err) {
+    showToast('Failed to load dashboard data', 'error');
+    console.error(err);
+  } finally {
+    refreshIcon.classList.remove('animate-spin');
+  }
+}
+
+document.getElementById('refresh-all-btn').addEventListener('click', () => {
+  loadDashboard();
+  if (typeof window.bootstrapMasterPage === 'function') {
+    // Re-fetch data only (dedup guard in master.js prevents double listener binding)
+    window.bootstrapMasterPage().catch(() => {});
+  }
+});
+
+// ── Index rebuild buttons ──────────────────────────────────────────────────
+document.getElementById('refresh-curated-btn').addEventListener('click', async () => {
+  const btn = document.getElementById('refresh-curated-btn');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="material-symbols-outlined text-sm animate-spin">refresh</span> Rebuilding...';
+  try {
+    await fetch('/api/curated/refresh', { method: 'POST' });
+    document.getElementById('action-result').textContent = '✓ Curated index rebuilt at ' + new Date().toLocaleTimeString();
+    showToast('Curated index rebuilt!', 'verified');
+    setTimeout(loadDashboard, 1000);
+  } catch {
+    document.getElementById('action-result').textContent = '✗ Failed to rebuild. Check server logs.';
+    showToast('Rebuild failed', 'error');
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '<span class="material-symbols-outlined text-sm">refresh</span> Rebuild Curated Index';
+  }
+});
+
+document.getElementById('refresh-master-btn').addEventListener('click', async () => {
+  const btn = document.getElementById('refresh-master-btn');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="material-symbols-outlined text-sm animate-spin">refresh</span> Rebuilding...';
+  try {
+    await fetch('/api/master/refresh', { method: 'POST' });
+    document.getElementById('action-result').textContent = '✓ Master index rebuilt at ' + new Date().toLocaleTimeString();
+    showToast('Master index rebuilt!', 'database');
+    setTimeout(loadDashboard, 1000);
+  } catch {
+    document.getElementById('action-result').textContent = '✗ Failed to rebuild.';
+    showToast('Rebuild failed', 'error');
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '<span class="material-symbols-outlined text-sm">database</span> Rebuild Master Index';
+  }
+});
+
+// ── Init ───────────────────────────────────────────────────────────────────
+loadDashboard();
+</script>
+
+<!-- Master search JS (loaded after DOM is ready) -->
+<script src="/ui/master.js"></script>
+
+</body></html>

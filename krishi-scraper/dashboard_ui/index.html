@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html class="light" lang="en" data-page="home"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<meta name="description" content="Krishi-Setu: AI-powered agricultural scheme finder. Discover government benefits, subsidies, and crop insurance schemes tailored for Indian farmers."/>
+<title>Krishi-Setu Home Page</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+  tailwind.config = {
+    darkMode: "class",
+    theme: {
+      extend: {
+        colors: {
+          "primary": "#13ec13",
+          "background-light": "#f6f8f6",
+          "background-dark": "#102210",
+          "earthy": "#5d4037",
+        },
+        fontFamily: { "display": ["Public Sans", "sans-serif"] },
+        borderRadius: { "DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px" },
+      },
+    },
+  }
+</script>
+<style>
+  body { min-height: max(884px, 100dvh); }
+  .chip-active { border-color: #13ec13 !important; background: rgba(19,236,19,0.08); }
+  .scheme-card-skeleton { animation: pulse 1.5s ease-in-out infinite; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.5} }
+</style>
+</head>
+<body class="bg-background-light dark:bg-background-dark font-display text-[#111811] dark:text-white min-h-screen">
+
+<script src="/ui/nav.js"></script>
+
+<main class="max-w-[1440px] mx-auto px-4 py-8">
+  <section class="mb-8 flex flex-col gap-4 rounded-3xl border border-gray-200 bg-white/80 p-5 shadow-sm backdrop-blur-sm dark:border-gray-800 dark:bg-[#162c16]/80 md:flex-row md:items-center md:justify-between">
+    <div>
+      <p class="text-xs font-black uppercase tracking-[0.22em] text-primary">Krishi-Setu Home</p>
+      <h1 class="mt-1 text-2xl font-black tracking-tight text-earthy dark:text-white">Farmer-first scheme discovery</h1>
+      <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Shared navigation is active across the platform. Use the quick actions here for language switching and primary workflows.</p>
+    </div>
+    <div class="flex items-center gap-2">
+      <button id="lang-toggle" class="flex items-center gap-1 rounded-lg bg-primary/10 px-3 py-1.5 text-sm font-bold text-earthy transition-colors hover:bg-primary/20 dark:text-primary">
+        <span class="material-symbols-outlined text-sm">language</span>
+        <span id="lang-label">EN</span>
+      </button>
+      <a href="/finder" class="inline-flex items-center gap-2 rounded-lg border border-primary/20 bg-white px-3 py-1.5 text-sm font-bold text-earthy transition-colors hover:border-primary hover:text-primary dark:bg-[#102210] dark:text-white">
+        <span class="material-symbols-outlined text-sm">search</span>
+        Browse Schemes
+      </a>
+      <a href="/vault" class="inline-flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-sm font-bold text-gray-700 transition-colors hover:border-primary hover:text-primary dark:border-gray-700 dark:bg-[#102210] dark:text-gray-200">
+        <span class="material-symbols-outlined text-sm">folder</span>
+        My Vault
+      </a>
+    </div>
+  </section>
+
+  <!-- Hero Section -->
+  <section class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center mb-16">
+    <div class="flex flex-col gap-8 text-center lg:text-left">
+      <div class="space-y-4">
+        <div id="hero-stat" class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-xs font-bold text-earthy dark:text-primary">
+          <span class="size-2 rounded-full bg-primary animate-pulse inline-block"></span>
+          <span id="hero-stat-text">Loading schemes...</span>
+        </div>
+        <h2 class="text-4xl md:text-6xl font-black text-earthy dark:text-white leading-tight">
+          Find the right government schemes for your farm
+        </h2>
+        <p class="text-lg text-gray-600 dark:text-gray-400 max-w-xl mx-auto lg:mx-0">
+          Ask in your language and discover benefits tailored for you. Our AI-driven platform helps you navigate hundreds of agricultural schemes.
+        </p>
+      </div>
+
+      <!-- AI Search Bar -->
+      <div class="relative w-full max-w-2xl mx-auto lg:mx-0">
+        <div class="flex items-center bg-white dark:bg-gray-900 border-2 border-primary/30 focus-within:border-primary rounded-2xl p-2 shadow-xl shadow-primary/5 transition-all">
+          <span class="material-symbols-outlined text-gray-400 ml-3">search</span>
+          <input id="hero-search" class="flex-1 bg-transparent border-none focus:ring-0 text-lg px-4 py-3 placeholder:text-gray-400 dark:text-white" placeholder="e.g., How can I get a subsidy for a new tractor?" type="text"/>
+          <button id="voice-btn" class="p-3 text-primary hover:bg-primary/10 rounded-xl transition-colors" title="Voice search">
+            <span class="material-symbols-outlined">mic</span>
+          </button>
+          <button id="search-btn" class="bg-primary text-[#111811] font-bold px-8 py-3 rounded-xl hover:scale-[1.02] active:scale-[0.98] transition-all">
+            Ask Krishi-Setu
+          </button>
+        </div>
+
+        <!-- Quick Search Chips -->
+        <div class="flex flex-wrap gap-3 mt-6 justify-center lg:justify-start">
+          <button class="quick-chip flex items-center gap-2 px-4 py-2 rounded-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 hover:border-primary transition-colors cursor-pointer shadow-sm" data-query="tractor subsidy">
+            <span class="material-symbols-outlined text-sm text-primary">agriculture</span>
+            <span class="text-sm font-medium">Tractor subsidy</span>
+          </button>
+          <button class="quick-chip flex items-center gap-2 px-4 py-2 rounded-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 hover:border-primary transition-colors cursor-pointer shadow-sm" data-query="crop insurance">
+            <span class="material-symbols-outlined text-sm text-primary">shield</span>
+            <span class="text-sm font-medium">Crop insurance</span>
+          </button>
+          <button class="quick-chip flex items-center gap-2 px-4 py-2 rounded-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 hover:border-primary transition-colors cursor-pointer shadow-sm" data-query="irrigation support">
+            <span class="material-symbols-outlined text-sm text-primary">water_drop</span>
+            <span class="text-sm font-medium">Irrigation support</span>
+          </button>
+          <button class="quick-chip flex items-center gap-2 px-4 py-2 rounded-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 hover:border-primary transition-colors cursor-pointer shadow-sm" data-query="income support pm kisan">
+            <span class="material-symbols-outlined text-sm text-primary">payments</span>
+            <span class="text-sm font-medium">Income support</span>
+          </button>
+          <button class="quick-chip flex items-center gap-2 px-4 py-2 rounded-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 hover:border-primary transition-colors cursor-pointer shadow-sm" data-query="organic farming">
+            <span class="material-symbols-outlined text-sm text-primary">eco</span>
+            <span class="text-sm font-medium">Organic farming</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Chat Preview Panel -->
+    <div class="hidden lg:block relative">
+      <div class="bg-white dark:bg-gray-800 rounded-3xl shadow-2xl p-6 border border-gray-100 dark:border-gray-700 relative overflow-hidden">
+        <div class="absolute top-0 left-0 w-full h-1 bg-primary"></div>
+        <div class="space-y-6">
+          <div class="flex items-start gap-4">
+            <div class="size-10 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center shrink-0">
+              <span class="material-symbols-outlined text-gray-500">person</span>
+            </div>
+            <div class="bg-gray-50 dark:bg-gray-900 px-4 py-3 rounded-2xl rounded-tl-none">
+              <p class="text-sm leading-relaxed text-gray-700 dark:text-gray-300">Namaste, what are the current schemes for drought relief in Karnataka?</p>
+            </div>
+          </div>
+          <div class="flex items-end gap-4 justify-end">
+            <div class="bg-primary/10 dark:bg-primary/20 px-4 py-3 rounded-2xl rounded-br-none border border-primary/20 max-w-[80%]">
+              <p class="text-sm leading-relaxed text-earthy dark:text-primary font-medium">
+                Namaste! For Karnataka, you are eligible for the PM-KISAN relief fund and the State Drought Compensation. Based on your land records, you can claim up to ₹2,000 extra this season. Shall I help you check eligibility?
+              </p>
+            </div>
+            <div class="size-10 rounded-full bg-primary flex items-center justify-center shrink-0 shadow-lg shadow-primary/20">
+              <span class="material-symbols-outlined text-background-dark">smart_toy</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="absolute -z-10 -bottom-10 -right-10 size-64 bg-primary/10 rounded-full blur-3xl"></div>
+    </div>
+  </section>
+
+  <!-- Popular Schemes Section -->
+  <section class="mb-16">
+    <div class="flex items-center justify-between mb-8">
+      <h3 class="text-2xl font-bold text-earthy dark:text-white flex items-center gap-2">
+        <span class="material-symbols-outlined text-primary">star</span>
+        Popular Schemes
+      </h3>
+      <button id="view-all-btn" class="text-primary font-bold flex items-center gap-1 hover:underline">
+        View All <span class="material-symbols-outlined text-sm">arrow_forward</span>
+      </button>
+    </div>
+    <div id="popular-schemes-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <!-- Skeleton loaders -->
+      <div class="scheme-card-skeleton bg-white dark:bg-gray-800 rounded-2xl p-6 border border-gray-100 dark:border-gray-700 h-64 flex flex-col gap-4">
+        <div class="h-4 bg-gray-200 dark:bg-gray-600 rounded w-1/3"></div>
+        <div class="h-6 bg-gray-200 dark:bg-gray-600 rounded w-2/3"></div>
+        <div class="h-4 bg-gray-200 dark:bg-gray-600 rounded w-full"></div>
+        <div class="h-4 bg-gray-200 dark:bg-gray-600 rounded w-4/5"></div>
+        <div class="mt-auto h-10 bg-gray-200 dark:bg-gray-600 rounded-xl"></div>
+      </div>
+      <div class="scheme-card-skeleton bg-white dark:bg-gray-800 rounded-2xl p-6 border border-gray-100 dark:border-gray-700 h-64 flex flex-col gap-4">
+        <div class="h-4 bg-gray-200 dark:bg-gray-600 rounded w-1/3"></div>
+        <div class="h-6 bg-gray-200 dark:bg-gray-600 rounded w-2/3"></div>
+        <div class="h-4 bg-gray-200 dark:bg-gray-600 rounded w-full"></div>
+        <div class="h-4 bg-gray-200 dark:bg-gray-600 rounded w-4/5"></div>
+        <div class="mt-auto h-10 bg-gray-200 dark:bg-gray-600 rounded-xl"></div>
+      </div>
+      <div class="scheme-card-skeleton bg-white dark:bg-gray-800 rounded-2xl p-6 border border-gray-100 dark:border-gray-700 h-64 flex flex-col gap-4">
+        <div class="h-4 bg-gray-200 dark:bg-gray-600 rounded w-1/3"></div>
+        <div class="h-6 bg-gray-200 dark:bg-gray-600 rounded w-2/3"></div>
+        <div class="h-4 bg-gray-200 dark:bg-gray-600 rounded w-full"></div>
+        <div class="h-4 bg-gray-200 dark:bg-gray-600 rounded w-4/5"></div>
+        <div class="mt-auto h-10 bg-gray-200 dark:bg-gray-600 rounded-xl"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- How It Works Section -->
+  <section class="bg-earthy dark:bg-black rounded-[2.5rem] p-10 lg:p-16 text-white overflow-hidden relative">
+    <div class="absolute top-0 right-0 size-96 bg-primary/10 rounded-full blur-3xl -mr-20 -mt-20"></div>
+    <div class="relative z-10 max-w-4xl">
+      <h3 class="text-3xl font-bold mb-12">How it works</h3>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-12">
+        <div class="space-y-4 cursor-pointer group" onclick="document.getElementById('hero-search').focus()">
+          <div class="size-14 rounded-2xl bg-white/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
+            <span class="material-symbols-outlined text-primary text-3xl">chat_bubble</span>
+          </div>
+          <h5 class="text-xl font-bold">1. Ask Krishi-Setu</h5>
+          <p class="text-gray-400 text-sm leading-relaxed">Simply type or speak your query in your local language about any farm need.</p>
+        </div>
+        <div class="space-y-4 cursor-pointer group" onclick="window.location.href='/eligibility'">
+          <div class="size-14 rounded-2xl bg-white/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
+            <span class="material-symbols-outlined text-primary text-3xl">verified</span>
+          </div>
+          <h5 class="text-xl font-bold">2. Check Eligibility</h5>
+          <p class="text-gray-400 text-sm leading-relaxed">Our AI analyzes your land records and details to find matching schemes instantly.</p>
+        </div>
+        <div class="space-y-4 cursor-pointer group" onclick="window.location.href='/vault'">
+          <div class="size-14 rounded-2xl bg-white/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
+            <span class="material-symbols-outlined text-primary text-3xl">file_download</span>
+          </div>
+          <h5 class="text-xl font-bold">3. Apply &amp; Track</h5>
+          <p class="text-gray-400 text-sm leading-relaxed">Get step-by-step guidance on application and track your status in real-time.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<!-- Footer Section -->
+<footer class="border-t border-gray-200 dark:border-gray-800 bg-white dark:bg-background-dark py-12 px-4">
+  <div class="max-w-[1440px] mx-auto grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-8">
+    <div class="col-span-2">
+      <div class="flex items-center gap-2 mb-4">
+        <span class="material-symbols-outlined text-primary text-2xl">agriculture</span>
+        <h4 class="text-lg font-bold text-earthy dark:text-white">Krishi-Setu</h4>
+      </div>
+      <p class="text-sm text-gray-500 dark:text-gray-400 max-w-xs mb-6">
+        Digital Public Infrastructure for the future of Indian agriculture. Bridging the gap between farmers and government.
+      </p>
+      <div class="flex gap-4">
+        <a class="size-10 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center hover:bg-primary transition-colors text-gray-600 dark:text-gray-300 hover:text-white" href="#"><span class="material-symbols-outlined">share</span></a>
+        <button id="footer-lang-btn" class="size-10 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center hover:bg-primary transition-colors text-gray-600 dark:text-gray-300 hover:text-white"><span class="material-symbols-outlined">language</span></button>
+      </div>
+    </div>
+    <div>
+      <h5 class="font-bold mb-4">Platform</h5>
+      <ul class="space-y-3 text-sm text-gray-500 dark:text-gray-400">
+        <li><a class="hover:text-primary transition-colors" href="/finder">Scheme Finder</a></li>
+        <li><a class="hover:text-primary transition-colors" href="/eligibility">Eligibility Checker</a></li>
+        <li><a class="hover:text-primary transition-colors" href="/vault">Document Vault</a></li>
+        <li><a class="hover:text-primary transition-colors" href="/crawler">Crawler Admin</a></li>
+        <li><a class="hover:text-primary transition-colors" href="/master">Admin Dashboard</a></li>
+      </ul>
+    </div>
+    <div>
+      <h5 class="font-bold mb-4">Resources</h5>
+      <ul class="space-y-3 text-sm text-gray-500 dark:text-gray-400">
+        <li><a class="hover:text-primary transition-colors" href="/master">Help Center</a></li>
+        <li><a class="hover:text-primary transition-colors" href="/finder?query=mandi+price">Mandi Prices</a></li>
+        <li><a class="hover:text-primary transition-colors" href="/finder?query=weather+relief">Weather Alerts</a></li>
+        <li><a class="hover:text-primary transition-colors" href="/crawler">API Docs</a></li>
+      </ul>
+    </div>
+    <div>
+      <h5 class="font-bold mb-4">Support</h5>
+      <div class="space-y-3 text-sm text-gray-500 dark:text-gray-400">
+        <p class="flex items-center gap-2"><span class="material-symbols-outlined text-sm text-primary">call</span> 1800-123-4567</p>
+        <p class="flex items-center gap-2"><span class="material-symbols-outlined text-sm text-primary">mail</span> contact@krishisetu.gov.in</p>
+      </div>
+    </div>
+  </div>
+  <div class="max-w-[1440px] mx-auto mt-12 pt-8 border-t border-gray-100 dark:border-gray-800 flex flex-col md:flex-row justify-between items-center gap-4 text-xs text-gray-400">
+    <p>© 2024 Krishi-Setu AI Platform. All rights reserved.</p>
+    <div class="flex gap-6">
+      <a class="hover:text-primary" href="#">Privacy Policy</a>
+      <a class="hover:text-primary" href="#">Terms of Service</a>
+      <a class="hover:text-primary" href="#">Cookie Policy</a>
+    </div>
+  </div>
+</footer>
+
+<script>
+// ── Language toggle ────────────────────────────────────────────────────────
+const langLabel = document.getElementById('lang-label');
+const langTexts = {
+  en: {
+    label: 'EN',
+    placeholder: 'e.g., How can I get a subsidy for a new tractor?',
+    searchBtn: 'Ask Krishi-Setu',
+    chips: ['Tractor subsidy', 'Crop insurance', 'Irrigation support', 'Income support', 'Organic farming'],
+    popular: 'Popular Schemes', viewAll: 'View All',
+  },
+  hi: {
+    label: 'हिंदी',
+    placeholder: 'उदा., ट्रैक्टर पर सब्सिडी कैसे मिलेगी?',
+    searchBtn: 'कृषि-सेतु से पूछें',
+    chips: ['ट्रैक्टर सब्सिडी', 'फसल बीमा', 'सिंचाई सहायता', 'आय सहायता', 'जैविक खेती'],
+    popular: 'लोकप्रिय योजनाएं', viewAll: 'सभी देखें',
+  },
+};
+let currentLang = 'en';
+function toggleLang() {
+  currentLang = currentLang === 'en' ? 'hi' : 'en';
+  const t = langTexts[currentLang];
+  langLabel.textContent = t.label;
+  document.getElementById('hero-search').placeholder = t.placeholder;
+  document.getElementById('search-btn').textContent = t.searchBtn;
+  document.querySelectorAll('.quick-chip span:last-child').forEach((el, i) => {
+    if (t.chips[i]) el.textContent = t.chips[i];
+  });
+}
+document.getElementById('lang-toggle').addEventListener('click', toggleLang);
+document.getElementById('footer-lang-btn').addEventListener('click', toggleLang);
+
+// ── Search bar ─────────────────────────────────────────────────────────────
+function doSearch() {
+  const q = document.getElementById('hero-search').value.trim();
+  if (q) window.location.href = `/finder?query=${encodeURIComponent(q)}`;
+  else window.location.href = '/finder';
+}
+document.getElementById('search-btn').addEventListener('click', doSearch);
+document.getElementById('hero-search').addEventListener('keydown', (e) => { if (e.key === 'Enter') doSearch(); });
+
+// ── Voice search ───────────────────────────────────────────────────────────
+document.getElementById('voice-btn').addEventListener('click', () => {
+  if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+    alert('Voice search is not supported in this browser. Please use Chrome.');
+    return;
+  }
+  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  const recog = new SpeechRecognition();
+  recog.lang = currentLang === 'hi' ? 'hi-IN' : 'en-IN';
+  recog.onresult = (e) => {
+    const transcript = e.results[0][0].transcript;
+    document.getElementById('hero-search').value = transcript;
+  };
+  recog.onerror = () => {};
+  recog.start();
+});
+
+// ── Quick chips ────────────────────────────────────────────────────────────
+document.querySelectorAll('.quick-chip').forEach((chip) => {
+  chip.addEventListener('click', () => {
+    const q = chip.dataset.query;
+    window.location.href = `/finder?query=${encodeURIComponent(q)}`;
+  });
+});
+
+// ── View All ───────────────────────────────────────────────────────────────
+document.getElementById('view-all-btn').addEventListener('click', () => { window.location.href = '/finder'; });
+
+// ── Check for query param and pre-fill search ──────────────────────────────
+(function() {
+  const params = new URLSearchParams(window.location.search);
+  const q = params.get('query');
+  if (q) document.getElementById('hero-search').value = q;
+})();
+
+// ── Popular schemes ────────────────────────────────────────────────────────
+const TYPE_COLORS = {
+  income_support: { bg: 'bg-blue-100', text: 'text-blue-700', label: 'Income Support' },
+  credit: { bg: 'bg-purple-100', text: 'text-purple-700', label: 'Credit & Loan' },
+  insurance: { bg: 'bg-orange-100', text: 'text-orange-700', label: 'Insurance' },
+  subsidy: { bg: 'bg-green-100', text: 'text-green-700', label: 'Subsidy' },
+  organic_farming: { bg: 'bg-lime-100', text: 'text-lime-700', label: 'Organic Farming' },
+  other: { bg: 'bg-gray-100', text: 'text-gray-700', label: 'Scheme' },
+};
+
+function buildPopularCard(scheme) {
+  const t = TYPE_COLORS[scheme.scheme_type] || TYPE_COLORS.other;
+  const benefit = scheme.benefit_amount || '';
+  const desc = scheme.objective || scheme.rationale || scheme.target_beneficiaries || 'Learn about this agricultural scheme.';
+  const shortDesc = desc.length > 100 ? desc.slice(0, 97) + '...' : desc;
+  const facts = (scheme.key_facts || []).slice(0, 2);
+  const factsHtml = facts.length
+    ? facts.map(f => `<div class="flex items-center gap-2 text-sm"><span class="material-symbols-outlined text-primary text-lg">check_circle</span><span class="font-medium">${f.slice(0,60)}</span></div>`).join('')
+    : `<div class="flex items-center gap-2 text-sm"><span class="material-symbols-outlined text-primary text-lg">check_circle</span><span class="font-medium">${benefit || 'Government benefit available'}</span></div>`;
+
+  return `
+    <div class="bg-white dark:bg-gray-800 rounded-2xl p-6 border border-gray-100 dark:border-gray-700 hover:shadow-xl transition-shadow flex flex-col group cursor-pointer" onclick="window.location.href='/eligibility?scheme_id=${scheme.scheme_id}'">
+      <div class="flex justify-between items-start mb-4">
+        <div class="px-2 py-1 rounded ${t.bg} ${t.text} text-[10px] font-bold uppercase tracking-wider">${t.label}</div>
+        <span class="material-symbols-outlined text-gray-300 group-hover:text-primary transition-colors">bookmark</span>
+      </div>
+      <h4 class="text-xl font-bold text-earthy dark:text-white mb-2">${scheme.short_name || scheme.scheme_name}</h4>
+      <p class="text-sm text-gray-500 dark:text-gray-400 mb-4 flex-1">${shortDesc}</p>
+      <div class="space-y-3 mb-6">${factsHtml}</div>
+      <button class="w-full bg-background-light dark:bg-gray-900 border border-primary text-earthy dark:text-primary font-bold py-3 rounded-xl hover:bg-primary hover:text-white transition-all" onclick="event.stopPropagation(); window.location.href='/eligibility?scheme_id=${scheme.scheme_id}'">
+        Check Eligibility
+      </button>
+    </div>
+  `;
+}
+
+async function loadPopularSchemes() {
+  const grid = document.getElementById('popular-schemes-grid');
+  try {
+    const res = await fetch('/api/master/search?scope=curated&limit=3&query=');
+    const data = await res.json();
+    const items = (data.items || []).slice(0, 3);
+
+    if (!items.length) throw new Error('No data');
+    grid.innerHTML = items.map(buildPopularCard).join('');
+  } catch {
+    // Fallback to static well-known schemes via text search
+    try {
+      const queries = ['pm kisan', 'pmfby crop insurance', 'agricultural machinery'];
+      const results = await Promise.all(queries.map(q =>
+        fetch(`/api/schemes?query=${encodeURIComponent(q)}&limit=1&scope=all`).then(r => r.json())
+      ));
+      const items = results.map(d => (d.items || [])[0]).filter(Boolean);
+      if (items.length) {
+        grid.innerHTML = items.map(buildPopularCard).join('');
+        return;
+      }
+    } catch {}
+    // Final fallback: static cards
+    grid.innerHTML = `
+      <div class="bg-white dark:bg-gray-800 rounded-2xl p-6 border border-gray-100 dark:border-gray-700 hover:shadow-xl transition-shadow flex flex-col group">
+        <div class="flex justify-between items-start mb-4"><div class="px-2 py-1 rounded bg-blue-100 text-blue-700 text-[10px] font-bold uppercase">Income Support</div><span class="material-symbols-outlined text-gray-300 group-hover:text-primary">bookmark</span></div>
+        <h4 class="text-xl font-bold text-earthy dark:text-white mb-2">PM-KISAN</h4>
+        <p class="text-sm text-gray-500 dark:text-gray-400 mb-4 flex-1">Pradhan Mantri Kisan Samman Nidhi provides direct income support to small farmers.</p>
+        <div class="space-y-3 mb-6"><div class="flex items-center gap-2 text-sm"><span class="material-symbols-outlined text-primary text-lg">check_circle</span><span class="font-medium">₹6,000 annual income support</span></div><div class="flex items-center gap-2 text-sm"><span class="material-symbols-outlined text-primary text-lg">check_circle</span><span class="font-medium">Direct bank transfer (DBT)</span></div></div>
+        <button class="w-full bg-background-light dark:bg-gray-900 border border-primary text-earthy dark:text-primary font-bold py-3 rounded-xl hover:bg-primary hover:text-white transition-all" onclick="window.location.href='/finder?query=pm+kisan'">Check Eligibility</button>
+      </div>
+      <div class="bg-white dark:bg-gray-800 rounded-2xl p-6 border border-gray-100 dark:border-gray-700 hover:shadow-xl transition-shadow flex flex-col group">
+        <div class="flex justify-between items-start mb-4"><div class="px-2 py-1 rounded bg-orange-100 text-orange-700 text-[10px] font-bold uppercase">Insurance</div><span class="material-symbols-outlined text-gray-300 group-hover:text-primary">bookmark</span></div>
+        <h4 class="text-xl font-bold text-earthy dark:text-white mb-2">PMFBY</h4>
+        <p class="text-sm text-gray-500 dark:text-gray-400 mb-4 flex-1">Pradhan Mantri Fasal Bima Yojana offers crop insurance against natural calamities.</p>
+        <div class="space-y-3 mb-6"><div class="flex items-center gap-2 text-sm"><span class="material-symbols-outlined text-primary text-lg">check_circle</span><span class="font-medium">Low premium rates for farmers</span></div><div class="flex items-center gap-2 text-sm"><span class="material-symbols-outlined text-primary text-lg">check_circle</span><span class="font-medium">Coverage from pre-sowing to harvest</span></div></div>
+        <button class="w-full bg-background-light dark:bg-gray-900 border border-primary text-earthy dark:text-primary font-bold py-3 rounded-xl hover:bg-primary hover:text-white transition-all" onclick="window.location.href='/finder?query=pmfby+crop+insurance'">Check Eligibility</button>
+      </div>
+      <div class="bg-white dark:bg-gray-800 rounded-2xl p-6 border border-gray-100 dark:border-gray-700 hover:shadow-xl transition-shadow flex flex-col group">
+        <div class="flex justify-between items-start mb-4"><div class="px-2 py-1 rounded bg-green-100 text-green-700 text-[10px] font-bold uppercase">Subsidy</div><span class="material-symbols-outlined text-gray-300 group-hover:text-primary">bookmark</span></div>
+        <h4 class="text-xl font-bold text-earthy dark:text-white mb-2">SMAM</h4>
+        <p class="text-sm text-gray-500 dark:text-gray-400 mb-4 flex-1">Sub-Mission on Agricultural Mechanization assists in purchasing farm machinery.</p>
+        <div class="space-y-3 mb-6"><div class="flex items-center gap-2 text-sm"><span class="material-symbols-outlined text-primary text-lg">check_circle</span><span class="font-medium">Up to 50% subsidy on equipment</span></div><div class="flex items-center gap-2 text-sm"><span class="material-symbols-outlined text-primary text-lg">check_circle</span><span class="font-medium">Promotion of custom hiring centers</span></div></div>
+        <button class="w-full bg-background-light dark:bg-gray-900 border border-primary text-earthy dark:text-primary font-bold py-3 rounded-xl hover:bg-primary hover:text-white transition-all" onclick="window.location.href='/finder?query=tractor+machinery+subsidy'">Check Eligibility</button>
+      </div>
+    `;
+  }
+}
+
+// ── Hero stat counter ──────────────────────────────────────────────────────
+async function loadStats() {
+  try {
+    const [baseData, masterData] = await Promise.all([
+      fetch('/api/overview').then(r => r.json()).catch(() => ({ totals: {} })),
+      fetch('/api/master/overview').then(r => r.json()).catch(() => ({ totals: {} })),
+    ]);
+    const total = masterData.totals?.master_schemes || baseData.totals?.master || baseData.totals?.schemes;
+    if (total) {
+      document.getElementById('hero-stat-text').textContent = `${Number(total).toLocaleString()}+ agricultural schemes indexed`;
+    } else {
+      document.getElementById('hero-stat-text').textContent = '500+ agricultural schemes indexed';
+    }
+  } catch {
+    document.getElementById('hero-stat-text').textContent = '500+ agricultural schemes indexed';
+  }
+}
+
+loadPopularSchemes();
+loadStats();
+</script>
+
+</body></html>

@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html class="light" lang="en" data-page="crawler">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Krishi-Setu Crawler: Run end-to-end web crawls, monitor extraction logs, and inspect scheme artifacts."/>
+  <title>Krishi-Setu · Crawler</title>
+  <script src="https://cdn.tailwindcss.com?plugins=forms"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" />
+  <script>
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            primary: "#13ec13",
+            "background-light": "#f6f8f6",
+            "background-dark": "#102210",
+          },
+          fontFamily: { display: ["Public Sans", "sans-serif"] },
+        },
+      },
+    };
+  </script>
+  <style>
+    body { font-family: 'Public Sans', sans-serif; min-height: 100dvh; }
+    .no-scrollbar::-webkit-scrollbar { display: none; }
+    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+  </style>
+</head>
+<body class="bg-background-light text-[#111811] dark:bg-background-dark dark:text-white">
+  <script src="/ui/nav.js"></script>
+
+  <main class="mx-auto max-w-7xl px-4 pb-28 pt-24">
+    <section class="mb-6 rounded-3xl border border-emerald-100 bg-gradient-to-br from-emerald-50 via-white to-cyan-50 p-6 dark:border-emerald-900/40 dark:from-[#112811] dark:via-[#153115] dark:to-[#183a28]">
+      <div class="flex flex-wrap items-end justify-between gap-4">
+        <div>
+          <p class="text-xs font-bold uppercase tracking-[0.2em] text-emerald-700 dark:text-emerald-300">Extraction Pipeline</p>
+          <h1 class="mt-1 text-3xl font-black tracking-tight">Crawler Control Center</h1>
+          <p class="mt-1 text-sm text-gray-600 dark:text-gray-300">Run end-to-end crawls, monitor logs, and inspect extracted schemes.</p>
+        </div>
+        <div class="flex items-center gap-2 text-sm">
+          <span id="apiHealthBadge" class="inline-flex items-center gap-1 rounded-full bg-gray-100 px-3 py-1 font-semibold text-gray-600 dark:bg-[#203620] dark:text-gray-300">
+            <span class="material-symbols-outlined text-[14px]">heart_plus</span>
+            Checking API
+          </span>
+          <a href="/schemes" class="rounded-xl border border-gray-200 px-3 py-1.5 text-xs font-bold hover:border-primary hover:text-primary dark:border-gray-700">Open Schemes</a>
+        </div>
+      </div>
+    </section>
+
+    <section class="mb-6 grid gap-4 xl:grid-cols-5">
+      <article class="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm xl:col-span-3 dark:border-gray-800 dark:bg-[#1a2e1a]">
+        <div class="mb-3 flex items-center justify-between">
+          <h2 class="text-sm font-black uppercase tracking-wide text-gray-500">Run Website Crawl</h2>
+          <span class="text-xs text-gray-500">Selenium + AI extraction</span>
+        </div>
+
+        <form id="runForm" class="grid gap-3 md:grid-cols-2">
+          <label class="md:col-span-2 block">
+            <span class="mb-1 block text-xs font-semibold uppercase tracking-wide text-gray-500">Website URL</span>
+            <input id="runUrl" name="runUrl" value="https://agriwelfare.gov.in/en/Major" required class="w-full rounded-xl border-gray-200 bg-[#f0f4f0] text-sm dark:border-gray-700 dark:bg-[#0f210f] focus:border-primary focus:ring-primary" />
+          </label>
+
+          <label class="block">
+            <span class="mb-1 block text-xs font-semibold uppercase tracking-wide text-gray-500">Depth</span>
+            <input id="runDepth" name="runDepth" type="number" min="0" max="6" value="2" class="w-full rounded-xl border-gray-200 bg-[#f0f4f0] text-sm dark:border-gray-700 dark:bg-[#0f210f]" />
+          </label>
+
+          <label class="block">
+            <span class="mb-1 block text-xs font-semibold uppercase tracking-wide text-gray-500">Max Pages</span>
+            <input id="runPages" name="runPages" type="number" min="1" max="1200" value="200" class="w-full rounded-xl border-gray-200 bg-[#f0f4f0] text-sm dark:border-gray-700 dark:bg-[#0f210f]" />
+          </label>
+
+          <label class="block">
+            <span class="mb-1 block text-xs font-semibold uppercase tracking-wide text-gray-500">Max Files</span>
+            <input id="runFiles" name="runFiles" type="number" min="0" max="2000" value="300" class="w-full rounded-xl border-gray-200 bg-[#f0f4f0] text-sm dark:border-gray-700 dark:bg-[#0f210f]" />
+          </label>
+
+          <label class="block">
+            <span class="mb-1 block text-xs font-semibold uppercase tracking-wide text-gray-500">Model</span>
+            <input id="runModel" name="runModel" placeholder="gemini-2.5-flash" class="w-full rounded-xl border-gray-200 bg-[#f0f4f0] text-sm dark:border-gray-700 dark:bg-[#0f210f]" />
+          </label>
+
+          <label class="md:col-span-2 block">
+            <span class="mb-1 block text-xs font-semibold uppercase tracking-wide text-gray-500">Gemini API Key</span>
+            <input id="runApiKey" name="runApiKey" type="password" placeholder="Optional if already configured in env" class="w-full rounded-xl border-gray-200 bg-[#f0f4f0] text-sm dark:border-gray-700 dark:bg-[#0f210f]" />
+          </label>
+
+          <label class="inline-flex items-center gap-2 rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 text-sm dark:border-gray-700 dark:bg-[#0f210f] md:col-span-2">
+            <input id="runSeleniumSite" name="runSeleniumSite" type="checkbox" checked class="rounded border-gray-300 text-primary" />
+            Use Selenium full-site crawling (recommended)
+          </label>
+
+          <label class="inline-flex items-center gap-2 rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 text-sm dark:border-gray-700 dark:bg-[#0f210f]">
+            <input id="runJs" name="runJs" type="checkbox" class="rounded border-gray-300 text-primary" />
+            Enable JS fallback
+          </label>
+
+          <label class="inline-flex items-center gap-2 rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 text-sm dark:border-gray-700 dark:bg-[#0f210f]">
+            <input id="runNoAi" name="runNoAi" type="checkbox" class="rounded border-gray-300 text-primary" />
+            Disable AI extraction
+          </label>
+
+          <label class="inline-flex items-center gap-2 rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 text-sm dark:border-gray-700 dark:bg-[#0f210f] md:col-span-2">
+            <input id="runAllDomains" name="runAllDomains" type="checkbox" class="rounded border-gray-300 text-primary" />
+            Crawl linked external domains
+          </label>
+
+          <div class="md:col-span-2 flex flex-wrap gap-2">
+            <button id="runSubmit" class="rounded-xl bg-primary px-4 py-2 text-sm font-bold text-[#111811] hover:bg-primary/90" type="submit">
+              <span class="material-symbols-outlined align-middle text-[16px]">play_arrow</span>
+              Start Crawl Job
+            </button>
+            <button id="stopPollingBtn" class="rounded-xl border border-gray-200 px-4 py-2 text-sm font-semibold hover:border-primary hover:text-primary dark:border-gray-700" type="button">Stop Log Polling</button>
+          </div>
+        </form>
+      </article>
+
+      <article class="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm xl:col-span-2 dark:border-gray-800 dark:bg-[#1a2e1a]">
+        <div class="mb-3 flex items-center justify-between">
+          <h2 class="text-sm font-black uppercase tracking-wide text-gray-500">Live Job Logs</h2>
+          <span id="jobMeta" class="text-xs text-gray-500">No active job.</span>
+        </div>
+        <pre id="jobLog" class="h-[460px] overflow-auto rounded-xl bg-[#0d1a0d] p-3 text-[11px] leading-relaxed text-emerald-200">Waiting for crawler logs...</pre>
+      </article>
+    </section>
+
+    <section class="grid gap-4 xl:grid-cols-2">
+      <article class="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-800 dark:bg-[#1a2e1a]">
+        <div class="mb-3 flex items-center justify-between">
+          <h2 class="text-sm font-black uppercase tracking-wide text-gray-500">Recent Jobs</h2>
+          <p id="jobsMeta" class="text-xs text-gray-500">Loading...</p>
+        </div>
+        <div class="overflow-auto">
+          <table class="min-w-full text-left text-xs">
+            <thead class="bg-gray-50 text-gray-600 dark:bg-[#203620] dark:text-gray-300">
+              <tr>
+                <th class="px-3 py-2">Job</th>
+                <th class="px-3 py-2">Status</th>
+                <th class="px-3 py-2">URL</th>
+                <th class="px-3 py-2">Updated</th>
+              </tr>
+            </thead>
+            <tbody id="jobRows"></tbody>
+          </table>
+        </div>
+      </article>
+
+      <article class="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-800 dark:bg-[#1a2e1a]">
+        <div class="mb-3 flex items-center justify-between">
+          <h2 class="text-sm font-black uppercase tracking-wide text-gray-500">Reports</h2>
+          <p id="reportsMeta" class="text-xs text-gray-500">Loading...</p>
+        </div>
+        <div class="overflow-auto">
+          <table class="min-w-full text-left text-xs">
+            <thead class="bg-gray-50 text-gray-600 dark:bg-[#203620] dark:text-gray-300">
+              <tr>
+                <th class="px-3 py-2">Task</th>
+                <th class="px-3 py-2">Status</th>
+                <th class="px-3 py-2">Schemes</th>
+                <th class="px-3 py-2">Artifacts</th>
+              </tr>
+            </thead>
+            <tbody id="reportRows"></tbody>
+          </table>
+        </div>
+      </article>
+
+      <article class="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm xl:col-span-2 dark:border-gray-800 dark:bg-[#1a2e1a]">
+        <div class="mb-3 flex items-center justify-between">
+          <h2 class="text-sm font-black uppercase tracking-wide text-gray-500">Extracted Schemes (Recent)</h2>
+          <p id="extractedMeta" class="text-xs text-gray-500">Loading...</p>
+        </div>
+        <div id="extractedRows" class="grid gap-2 sm:grid-cols-2 xl:grid-cols-3"></div>
+      </article>
+    </section>
+  </main>
+
+  <script src="/ui/crawler.js"></script>
+</body>
+</html>
