@@ -1,0 +1,560 @@
+<!DOCTYPE html>
+<html class="light" lang="en" data-page="eligibility"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<meta name="description" content="Krishi-Setu Eligibility Checker: Check if you qualify for government agricultural schemes based on your farm profile."/>
+<title>Scheme Eligibility Checker</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+  tailwind.config = {
+    darkMode: "class",
+    theme: {
+      extend: {
+        colors: { "primary": "#13ec13", "background-light": "#f6f8f6", "background-dark": "#102210" },
+        fontFamily: { "display": ["Public Sans", "sans-serif"] },
+        borderRadius: { "DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px" },
+      },
+    },
+  }
+</script>
+<style>
+  body { font-family: 'Public Sans', sans-serif; min-height: max(884px, 100dvh); }
+  .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+  .eligible-banner { background: linear-gradient(135deg, #13ec13 0%, #0dbb0d 100%); }
+  .review-banner { background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); }
+  .needs-banner { background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); }
+</style>
+</head>
+<body class="bg-background-light dark:bg-background-dark min-h-screen text-[#111811] dark:text-white">
+
+<script src="/ui/nav.js"></script>
+
+<main class="max-w-xl mx-auto pb-24">
+  <section class="px-4 pt-6">
+    <div class="rounded-2xl border border-gray-200 bg-white/80 p-5 shadow-sm backdrop-blur-sm dark:border-gray-800 dark:bg-[#162c16]/80">
+      <div class="flex items-start justify-between gap-4">
+        <div class="min-w-0">
+          <p class="text-xs font-black uppercase tracking-[0.22em] text-primary">Eligibility Checker</p>
+          <h1 id="eligibility-title" class="mt-1 text-2xl font-bold leading-tight tracking-tight">Eligibility Checker</h1>
+          <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Evaluate farmer profile fit against extracted scheme rules with shared navigation enabled.</p>
+        </div>
+        <div class="flex items-center gap-2">
+          <button id="info-btn" class="text-[#111811] dark:text-white hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full p-2 transition-colors" title="About this tool">
+            <span class="material-symbols-outlined">info</span>
+          </button>
+          <a href="/finder" class="text-[#111811] dark:text-white hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full p-2 transition-colors" title="Browse all schemes">
+            <span class="material-symbols-outlined">search</span>
+          </a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Status Banner -->
+  <div class="p-4">
+    <div id="status-banner" class="relative overflow-hidden rounded-xl eligible-banner p-6 shadow-lg">
+      <div class="relative z-10 flex flex-col gap-2">
+        <div class="flex items-center gap-2">
+          <span id="status-icon" class="material-symbols-outlined text-white text-3xl">check_circle</span>
+          <p class="text-white text-sm font-medium opacity-90 uppercase tracking-wider">Status</p>
+        </div>
+        <h2 id="eligibility-status" class="text-white text-4xl font-extrabold leading-tight">Loading...</h2>
+        <p id="eligibility-description" class="text-white text-base font-medium">Checking scheme eligibility...</p>
+      </div>
+      <div class="absolute -right-8 -bottom-8 opacity-20">
+        <span class="material-symbols-outlined text-[120px] text-white">agriculture</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Eligibility Criteria Section -->
+  <section class="px-4 py-2">
+    <h3 class="text-lg font-bold mb-3 flex items-center gap-2">
+      <span class="material-symbols-outlined text-primary">verified_user</span>
+      Criteria Breakdown
+    </h3>
+    <div id="eligibility-criteria" class="space-y-3">
+      <!-- Populated by JS -->
+    </div>
+  </section>
+
+  <!-- Eligibility Check Form Section -->
+  <section class="px-4 py-4">
+    <div class="bg-white dark:bg-[#1a2e1a] rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm overflow-hidden">
+      <div class="p-4 bg-primary/10 border-b border-primary/20 flex items-center gap-2">
+        <span class="material-symbols-outlined text-primary">assignment_ind</span>
+        <h3 class="font-bold text-base">Check Your Eligibility</h3>
+        <span class="ml-auto text-xs text-gray-500">Fill your details below</span>
+      </div>
+      <form id="eligibility-form" class="p-4 space-y-4">
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1 block">Age</label>
+            <input id="input-age" type="number" min="18" max="99" placeholder="e.g. 42"
+              class="w-full border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 text-sm bg-[#f0f4f0] dark:bg-gray-800 focus:ring-primary focus:border-primary"/>
+          </div>
+          <div>
+            <label class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1 block">Annual Income (₹)</label>
+            <input id="input-income" type="number" min="0" placeholder="e.g. 120000"
+              class="w-full border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 text-sm bg-[#f0f4f0] dark:bg-gray-800 focus:ring-primary focus:border-primary"/>
+          </div>
+        </div>
+        <div>
+          <label class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1 block">Farmer Category</label>
+          <select id="input-category" class="w-full border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 text-sm bg-[#f0f4f0] dark:bg-gray-800 focus:ring-primary focus:border-primary">
+            <option value="">Select category</option>
+            <option value="small">Small Farmer (&lt;2 Ha)</option>
+            <option value="marginal">Marginal Farmer (&lt;1 Ha)</option>
+            <option value="medium">Medium Farmer (2–10 Ha)</option>
+            <option value="large">Large Farmer (&gt;10 Ha)</option>
+            <option value="tenant">Tenant Farmer</option>
+            <option value="sharecropper">Sharecropper</option>
+          </select>
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1 block">State</label>
+            <select id="input-state" class="w-full border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 text-sm bg-[#f0f4f0] dark:bg-gray-800 focus:ring-primary focus:border-primary">
+              <option value="">Select state</option>
+              <option>Maharashtra</option><option>Punjab</option><option>Haryana</option>
+              <option>Uttar Pradesh</option><option>Bihar</option><option>Rajasthan</option>
+              <option>Madhya Pradesh</option><option>Karnataka</option><option>Tamil Nadu</option>
+              <option>Andhra Pradesh</option><option>Telangana</option><option>Gujarat</option>
+              <option>West Bengal</option><option>Odisha</option><option>Assam</option>
+              <option>Kerala</option><option>Jharkhand</option><option>Chhattisgarh</option>
+            </select>
+          </div>
+          <div>
+            <label class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1 block">District</label>
+            <input id="input-district" type="text" placeholder="e.g. Nashik"
+              class="w-full border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 text-sm bg-[#f0f4f0] dark:bg-gray-800 focus:ring-primary focus:border-primary"/>
+          </div>
+        </div>
+        <div>
+          <label class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1 block">Land Holding (Hectares)</label>
+          <input id="input-landholding" type="number" min="0" step="0.1" placeholder="e.g. 2.5"
+            class="w-full border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 text-sm bg-[#f0f4f0] dark:bg-gray-800 focus:ring-primary focus:border-primary"/>
+        </div>
+        <div class="grid grid-cols-3 gap-3">
+          <div>
+            <label class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1 block">Aadhaar</label>
+            <select id="input-aadhaar" class="w-full border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 text-sm bg-[#f0f4f0] dark:bg-gray-800 focus:ring-primary focus:border-primary">
+              <option value="">Select</option>
+              <option value="yes">Yes</option>
+              <option value="no">No</option>
+            </select>
+          </div>
+          <div>
+            <label class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1 block">Land Record</label>
+            <select id="input-land-record" class="w-full border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 text-sm bg-[#f0f4f0] dark:bg-gray-800 focus:ring-primary focus:border-primary">
+              <option value="">Select</option>
+              <option value="yes">Yes</option>
+              <option value="no">No</option>
+            </select>
+          </div>
+          <div>
+            <label class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1 block">Bank A/C</label>
+            <select id="input-bank-account" class="w-full border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 text-sm bg-[#f0f4f0] dark:bg-gray-800 focus:ring-primary focus:border-primary">
+              <option value="">Select</option>
+              <option value="yes">Yes</option>
+              <option value="no">No</option>
+            </select>
+          </div>
+        </div>
+        <button type="submit" class="w-full bg-primary text-[#111811] font-bold py-3 rounded-xl hover:bg-primary/90 transition-colors flex items-center justify-center gap-2">
+          <span class="material-symbols-outlined text-sm">verified</span>
+          Check My Eligibility
+        </button>
+      </form>
+    </div>
+  </section>
+
+  <!-- Eligibility Result (populated after form submit) -->
+  <section class="px-4 py-2">
+    <div id="eligibility-result" class="hidden"></div>
+  </section>
+
+  <!-- Required Documents Section -->
+  <section class="px-4 py-4">
+    <h3 class="text-lg font-bold mb-3 flex items-center gap-2">
+      <span class="material-symbols-outlined text-primary">description</span>
+      Required Documents
+    </h3>
+    <div id="eligibility-documents" class="bg-white dark:bg-[#1a2e1a] rounded-xl overflow-hidden shadow-sm border border-gray-100 dark:border-gray-800 divide-y divide-gray-50 dark:divide-gray-800">
+      <!-- Populated by JS -->
+    </div>
+  </section>
+
+  <!-- Alternative Schemes Suggestion -->
+  <section id="alternative-section" class="px-4 py-2">
+    <div class="bg-[#f0f9f0] dark:bg-[#142814] p-4 rounded-xl border border-primary/20">
+      <div class="flex items-center gap-2 mb-2">
+        <span class="material-symbols-outlined text-primary">lightbulb</span>
+        <h4 class="font-bold text-primary">Alternative Discovery</h4>
+      </div>
+      <p id="eligibility-alternative" class="text-sm mb-4 leading-relaxed">
+        Based on your profile, you may also be eligible for another scheme.
+      </p>
+      <div id="alt-schemes-list" class="space-y-2 mb-4"></div>
+      <div class="flex gap-2">
+        <button id="dismiss-btn" class="flex-1 bg-white dark:bg-background-dark text-xs font-bold py-2 rounded-lg border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+          Dismiss
+        </button>
+        <button id="explore-btn" class="flex-1 bg-primary text-[#111811] text-xs font-bold py-2 rounded-lg hover:bg-primary/90 transition-colors">
+          Explore Now
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <!-- Trust Badge -->
+  <div class="flex items-center justify-center gap-2 py-8 opacity-60">
+    <span class="material-symbols-outlined text-sm">shield</span>
+    <p class="text-[10px] font-bold uppercase tracking-widest">Government Verified Platform</p>
+  </div>
+
+</main>
+
+<!-- Info Modal -->
+<div id="info-modal" class="fixed inset-0 z-[80] hidden">
+  <div class="absolute inset-0 bg-black/50" onclick="document.getElementById('info-modal').classList.add('hidden')"></div>
+  <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white dark:bg-gray-900 rounded-2xl p-6 w-80 max-w-[90vw] shadow-2xl">
+    <h3 class="font-bold text-lg mb-3 flex items-center gap-2"><span class="material-symbols-outlined text-primary">info</span>About Eligibility Checker</h3>
+    <p class="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
+      This tool compares your profile against scheme eligibility rules extracted from official government documents. Fill in your details and click "Check My Eligibility" for a detailed analysis.
+    </p>
+    <button class="mt-4 w-full bg-primary text-[#111811] font-bold py-2 rounded-xl" onclick="document.getElementById('info-modal').classList.add('hidden')">Got it</button>
+  </div>
+</div>
+
+<!-- Bottom Sticky CTA -->
+<div class="fixed bottom-0 left-0 right-0 p-4 bg-white/80 dark:bg-background-dark/80 backdrop-blur-md border-t border-gray-100 dark:border-gray-800 z-50">
+  <div class="max-w-xl mx-auto">
+    <button id="start-application-btn" class="w-full bg-primary hover:bg-primary/90 text-[#111811] h-14 rounded-xl font-bold text-lg shadow-lg flex items-center justify-center gap-2 transition-transform active:scale-[0.98]">
+      Start Application
+      <span class="material-symbols-outlined">arrow_forward</span>
+    </button>
+  </div>
+</div>
+
+<script>
+// ── Dark mode ──────────────────────────────────────────────────────────────
+if (localStorage.getItem('ks-dark') === '1') document.documentElement.classList.add('dark');
+
+// ── URL params ─────────────────────────────────────────────────────────────
+const urlParams = new URLSearchParams(window.location.search);
+const schemeId = urlParams.get('scheme_id');
+let schemeData = null;
+let officialWebsite = '';
+
+// ── DOM refs ───────────────────────────────────────────────────────────────
+const titleEl = document.getElementById('eligibility-title');
+const statusEl = document.getElementById('eligibility-status');
+const descriptionEl = document.getElementById('eligibility-description');
+const criteriaContainer = document.getElementById('eligibility-criteria');
+const docsContainer = document.getElementById('eligibility-documents');
+const alternativeText = document.getElementById('eligibility-alternative');
+const statusBanner = document.getElementById('status-banner');
+const statusIcon = document.getElementById('status-icon');
+const eligibilityResult = document.getElementById('eligibility-result');
+
+// ── Utility ────────────────────────────────────────────────────────────────
+function escHtml(v) {
+  return String(v || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+function normalizeText(value, fallback) {
+  if (!value || value === 'None') return fallback || 'Information not available.';
+  return value;
+}
+function getStatusLabel(score) {
+  if (score >= 80) return 'Eligible';
+  if (score >= 55) return 'Review Recommended';
+  return 'Needs Attention';
+}
+function applyBannerStyle(status) {
+  statusBanner.className = 'relative overflow-hidden rounded-xl p-6 shadow-lg ';
+  if (status === 'Eligible') {
+    statusBanner.classList.add('eligible-banner');
+    statusIcon.textContent = 'check_circle';
+  } else if (status === 'Review Recommended') {
+    statusBanner.classList.add('review-banner');
+    statusIcon.textContent = 'pending';
+  } else {
+    statusBanner.classList.add('needs-banner');
+    statusIcon.textContent = 'cancel';
+  }
+}
+
+// ── Criteria rendering ─────────────────────────────────────────────────────
+const CRITERIA_ICONS = ['landscape','groups','payments','water_drop','eco','agriculture'];
+function formatCriteria(data) {
+  const rules = (data.eligibility_rules || []).filter(Boolean);
+  const requirements = (data.requirements || []).filter(Boolean);
+  const source = rules.length ? rules : requirements.slice(0, 4);
+  return source.slice(0, 4).map((line, i) => ({
+    icon: CRITERIA_ICONS[i] || 'check_circle',
+    title: line.length > 60 ? line.slice(0,57) + '...' : line,
+    fullText: line,
+    status: 'check_circle',
+    desc: `Please verify: ${line.slice(0, 80)}`,
+  }));
+}
+
+function renderCriteria(items) {
+  if (!items.length) {
+    criteriaContainer.innerHTML = '<div class="text-sm text-gray-500 dark:text-gray-400 py-6 text-center">No eligibility rules available for this scheme.</div>';
+    return;
+  }
+  criteriaContainer.innerHTML = items.map(item => `
+    <div class="bg-white dark:bg-[#1a2e1a] p-4 rounded-xl shadow-sm border border-gray-100 dark:border-gray-800 flex items-start gap-4">
+      <div class="bg-primary/20 p-2 rounded-lg shrink-0">
+        <span class="material-symbols-outlined text-[#0dbb0d]">${item.icon}</span>
+      </div>
+      <div class="flex-1 min-w-0">
+        <div class="flex justify-between items-start gap-2">
+          <p class="font-bold text-sm leading-snug">${escHtml(item.title)}</p>
+          <span class="material-symbols-outlined text-primary shrink-0">check_circle</span>
+        </div>
+        <p class="text-xs text-gray-600 dark:text-gray-400 mt-1">${escHtml(item.desc)}</p>
+      </div>
+    </div>
+  `).join('');
+}
+
+// ── Documents rendering ────────────────────────────────────────────────────
+function formatDocuments(requirements) {
+  return (requirements || []).slice(0, 5).map((title, i) => ({
+    icon: i === 0 ? 'badge' : i === 1 ? 'map' : 'description',
+    title,
+    status: i === 0 ? 'Uploaded' : 'Missing',
+    color: i === 0 ? 'blue' : 'orange',
+  }));
+}
+
+function renderDocuments(items) {
+  if (!items.length) {
+    docsContainer.innerHTML = '<div class="text-sm text-gray-500 dark:text-gray-400 py-6 text-center px-4">Document requirements not available.</div>';
+    return;
+  }
+  docsContainer.innerHTML = items.map((doc, i) => `
+    <div class="flex items-center justify-between p-4">
+      <div class="flex items-center gap-3">
+        <span class="material-symbols-outlined text-${doc.color}-500">${doc.icon}</span>
+        <div>
+          <p class="font-medium text-sm">${escHtml(doc.title)}</p>
+          <p class="text-xs text-${doc.status === 'Uploaded' ? 'primary' : 'red'}-500 font-semibold uppercase">${doc.status}</p>
+        </div>
+      </div>
+      ${doc.status === 'Missing'
+        ? `<button class="bg-primary/10 text-primary px-3 py-1 rounded-full text-xs font-bold border border-primary/20 hover:bg-primary/20 transition-colors" onclick="window.location.href='/vault'">Upload</button>`
+        : `<span class="material-symbols-outlined text-primary">task_alt</span>`
+      }
+    </div>
+  `).join('');
+}
+
+// ── Alternative schemes ────────────────────────────────────────────────────
+const ALT_MAP = {
+  income_support: ['pmfby crop insurance', 'kcc credit'],
+  credit: ['pm kisan income support', 'pmfby crop insurance'],
+  insurance: ['pm kisan income', 'kcc loan'],
+  organic_farming: ['pkvy organic', 'pm kisan'],
+  subsidy: ['smam machinery', 'pm kisan'],
+};
+function getAlternativeQuery(type) {
+  const queries = ALT_MAP[type] || ['pm kisan'];
+  return queries[0];
+}
+
+async function loadAlternativeSchemes(type, currentId) {
+  const altList = document.getElementById('alt-schemes-list');
+  try {
+    const q = getAlternativeQuery(type);
+    const res = await fetch(`/api/schemes?query=${encodeURIComponent(q)}&limit=2&scope=all`);
+    const data = await res.json();
+    const items = (data.items || []).filter(s => String(s.scheme_id) !== String(currentId)).slice(0, 2);
+    if (!items.length) return;
+    alternativeText.textContent = `Based on your scheme type, you may also be eligible for:`;
+    altList.innerHTML = items.map(s => `
+      <div class="flex items-center justify-between bg-white dark:bg-[#102210] rounded-lg px-3 py-2 border border-primary/10 cursor-pointer hover:border-primary transition-colors" onclick="window.location.href='/eligibility?scheme_id=${s.scheme_id}'">
+        <p class="text-sm font-semibold">${escHtml(s.scheme_name)}</p>
+        <span class="material-symbols-outlined text-primary text-sm">arrow_forward</span>
+      </div>
+    `).join('');
+  } catch { /* ignore */ }
+}
+
+// ── Load scheme detail ─────────────────────────────────────────────────────
+async function loadSchemeDetail() {
+  if (!schemeId) {
+    titleEl.textContent = 'Eligibility Checker';
+    statusEl.textContent = 'No Scheme Selected';
+    applyBannerStyle('Needs Attention');
+    descriptionEl.textContent = 'Please select a scheme from the Scheme Finder to check eligibility.';
+    criteriaContainer.innerHTML = `<div class="text-center py-6"><a href="/finder" class="bg-primary text-[#111811] font-bold px-6 py-3 rounded-xl inline-block hover:bg-primary/90 transition-colors">Browse Schemes</a></div>`;
+    docsContainer.innerHTML = '<div class="text-sm text-gray-500 py-6 text-center px-4">No scheme selected.</div>';
+    return;
+  }
+
+  // Try master endpoint first for richer data, fall back to curated endpoint
+  let response = await fetch(`/api/master/schemes/${encodeURIComponent(schemeId)}`);
+  if (!response.ok) {
+    response = await fetch(`/api/schemes/${encodeURIComponent(schemeId)}`);
+  }
+  if (!response.ok) throw new Error('Scheme not found');
+  const data = await response.json();
+  schemeData = data;
+  officialWebsite = data.official_website || '';
+
+  const name = normalizeText(data.scheme_name, 'Scheme');
+  const objective = normalizeText(data.objective, data.benefit_amount || 'Review scheme eligibility requirements.');
+  const score = data.confidence_score || 0;
+  const status = getStatusLabel(score);
+
+  titleEl.textContent = `${name} Eligibility`;
+  document.title = `${name} Eligibility Checker`;
+  statusEl.textContent = status;
+  descriptionEl.textContent = objective.length > 120 ? objective.slice(0, 117) + '...' : objective;
+  applyBannerStyle(status);
+
+  renderCriteria(formatCriteria(data));
+  renderDocuments(formatDocuments(data.requirements));
+  loadAlternativeSchemes(data.scheme_type, schemeId);
+
+  // Update start application button
+  if (officialWebsite) {
+    document.getElementById('start-application-btn').onclick = () => window.open(officialWebsite, '_blank', 'noreferrer');
+  }
+}
+
+// ── Eligibility form submit ────────────────────────────────────────────────
+function buildEligibilityResult(result) {
+  const isEligible = result.eligible;
+  const bgClass = isEligible ? 'bg-[#e8fce8] border-green-200' : result.status === 'Review Recommended' ? 'bg-[#fff4e2] border-yellow-200' : 'bg-[#ffe7e7] border-red-200';
+  const textClass = isEligible ? 'text-[#0d9a0d]' : result.status === 'Review Recommended' ? 'text-[#af6f00]' : 'text-[#a50000]';
+  const icon = isEligible ? 'check_circle' : result.status === 'Review Recommended' ? 'pending' : 'cancel';
+
+  return `
+    <div class="rounded-2xl border ${bgClass} p-5 shadow-sm">
+      <div class="flex items-center justify-between gap-3 mb-3">
+        <div class="flex items-center gap-2">
+          <span class="material-symbols-outlined ${textClass} text-2xl">${icon}</span>
+          <div>
+            <p class="text-xs font-semibold uppercase tracking-wide text-gray-500">Eligibility Result</p>
+            <h3 class="text-xl font-bold ${textClass}">${escHtml(result.status)}</h3>
+          </div>
+        </div>
+        <span class="inline-flex items-center rounded-full px-3 py-1 text-sm font-bold ${bgClass} ${textClass} border">${result.confidence_score}%</span>
+      </div>
+      <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">${escHtml(result.recommendation)}</p>
+      ${result.matched_requirements?.length ? `
+        <div class="mb-3">
+          <p class="text-sm font-semibold text-[#0d9a0d] mb-2 flex items-center gap-1"><span class="material-symbols-outlined text-sm">check_circle</span>Matched Requirements</p>
+          <ul class="space-y-1">${result.matched_requirements.map(item => `<li class="text-sm text-gray-700 dark:text-gray-300 flex items-start gap-2"><span class="text-primary mt-0.5">✓</span>${escHtml(item)}</li>`).join('')}</ul>
+        </div>` : ''}
+      ${result.missing_requirements?.length ? `
+        <div class="mb-3">
+          <p class="text-sm font-semibold text-[#a50000] mb-2 flex items-center gap-1"><span class="material-symbols-outlined text-sm">cancel</span>Missing Requirements</p>
+          <ul class="space-y-1">${result.missing_requirements.map(item => `<li class="text-sm text-gray-700 dark:text-gray-300 flex items-start gap-2"><span class="text-red-500 mt-0.5">✗</span>${escHtml(item)}</li>`).join('')}</ul>
+        </div>` : ''}
+      ${result.exclusions?.length ? `
+        <div>
+          <p class="text-sm font-semibold text-[#af6f00] mb-2 flex items-center gap-1"><span class="material-symbols-outlined text-sm">warning</span>Potential Exclusions</p>
+          <ul class="space-y-1">${result.exclusions.map(item => `<li class="text-sm text-gray-700 dark:text-gray-300 flex items-start gap-2"><span class="text-yellow-500 mt-0.5">!</span>${escHtml(item)}</li>`).join('')}</ul>
+        </div>` : ''}
+    </div>
+  `;
+}
+
+async function submitEligibilityForm(event) {
+  event.preventDefault();
+  if (!schemeId) {
+    eligibilityResult.classList.remove('hidden');
+    eligibilityResult.innerHTML = '<div class="text-sm text-orange-600 dark:text-orange-400 py-4 text-center bg-orange-50 dark:bg-orange-900/20 rounded-xl px-4">Please select a scheme first. <a href="/finder" class="underline font-bold">Browse Schemes</a></div>';
+    return;
+  }
+
+  const aadhaarVal = document.getElementById('input-aadhaar').value;
+  const landVal = document.getElementById('input-land-record').value;
+  const bankVal = document.getElementById('input-bank-account').value;
+
+  const payload = {
+    age: Number(document.getElementById('input-age').value) || null,
+    annual_income: Number(document.getElementById('input-income').value) || null,
+    category: document.getElementById('input-category').value.trim(),
+    state: document.getElementById('input-state').value.trim(),
+    district: document.getElementById('input-district').value.trim(),
+    landholding_hectares: Number(document.getElementById('input-landholding').value) || null,
+    has_aadhaar: aadhaarVal === 'yes' ? true : aadhaarVal === 'no' ? false : null,
+    has_land_record: landVal === 'yes' ? true : landVal === 'no' ? false : null,
+    has_bank_account: bankVal === 'yes' ? true : bankVal === 'no' ? false : null,
+  };
+
+  eligibilityResult.classList.remove('hidden');
+  eligibilityResult.innerHTML = '<div class="text-sm text-gray-500 dark:text-gray-400 py-8 text-center"><span class="material-symbols-outlined text-3xl text-primary block mb-2 animate-spin">refresh</span>Checking eligibility against scheme rules...</div>';
+
+  eligibilityResult.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+  try {
+    const response = await fetch(`/api/schemes/${encodeURIComponent(schemeId)}/eligibility`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    if (!response.ok) throw new Error('Unable to evaluate eligibility');
+    const result = await response.json();
+    eligibilityResult.innerHTML = buildEligibilityResult(result);
+    // Update banner
+    statusEl.textContent = result.status;
+    applyBannerStyle(result.status);
+  } catch (error) {
+    eligibilityResult.innerHTML = '<div class="text-sm text-red-600 dark:text-red-400 py-6 text-center bg-red-50 dark:bg-red-900/20 rounded-xl px-4">Unable to evaluate eligibility. Please try again.</div>';
+    console.error(error);
+  }
+}
+
+document.getElementById('eligibility-form').addEventListener('submit', submitEligibilityForm);
+
+// ── Button handlers ────────────────────────────────────────────────────────
+document.getElementById('dismiss-btn').addEventListener('click', () => {
+  document.getElementById('alternative-section').style.display = 'none';
+});
+document.getElementById('explore-btn').addEventListener('click', () => {
+  const type = schemeData?.scheme_type || '';
+  const q = getAlternativeQuery(type);
+  window.location.href = `/finder?query=${encodeURIComponent(q)}`;
+});
+document.getElementById('info-btn').addEventListener('click', () => {
+  document.getElementById('info-modal').classList.remove('hidden');
+});
+document.getElementById('start-application-btn').addEventListener('click', () => {
+  if (officialWebsite) {
+    window.open(officialWebsite, '_blank', 'noreferrer');
+  } else if (schemeId) {
+    // Scroll to form
+    document.getElementById('eligibility-form').scrollIntoView({ behavior: 'smooth' });
+  } else {
+    window.location.href = '/finder';
+  }
+});
+
+// ── Init ───────────────────────────────────────────────────────────────────
+loadSchemeDetail().catch(() => {
+  // Fallback for no scheme_id or load error
+  titleEl.textContent = 'Eligibility Checker';
+  const fallbackStatus = 'Select a Scheme';
+  statusEl.textContent = fallbackStatus;
+  applyBannerStyle('Needs Attention');
+  descriptionEl.textContent = 'Select any scheme from the Scheme Finder and we\'ll check your eligibility.';
+  criteriaContainer.innerHTML = `
+    <div class="bg-white dark:bg-[#1a2e1a] p-6 rounded-xl text-center border border-gray-100 dark:border-gray-800">
+      <span class="material-symbols-outlined text-4xl text-gray-300 block mb-3">search</span>
+      <p class="text-gray-500 text-sm mb-4">No scheme selected yet.</p>
+      <a href="/finder" class="bg-primary text-[#111811] font-bold px-6 py-2 rounded-xl text-sm inline-block hover:bg-primary/90 transition-colors">Browse Schemes</a>
+    </div>`;
+  docsContainer.innerHTML = '<div class="text-sm text-gray-500 py-6 text-center px-4">Select a scheme to see required documents.</div>';
+});
+</script>
+</body></html>

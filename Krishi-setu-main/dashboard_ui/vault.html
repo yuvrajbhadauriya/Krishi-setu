@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html class="light" lang="en" data-page="vault"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<meta name="description" content="Krishi-Setu Document Vault: Securely store and manage your agricultural documents, land records, and scheme certificates."/>
+<title>Krishi-Setu Farmer Document Vault</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+  tailwind.config = {
+    darkMode: "class",
+    theme: {
+      extend: {
+        colors: { "primary": "#13ec13", "background-light": "#f6f8f6", "background-dark": "#102210" },
+        fontFamily: { "display": ["Public Sans"] },
+        borderRadius: { "DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px" },
+      },
+    },
+  }
+</script>
+<style>
+  body { min-height: max(884px, 100dvh); }
+  .sidebar-open { transform: translateX(0) !important; }
+  .sidebar-overlay-open { opacity: 1 !important; pointer-events: auto !important; }
+  #sidebar { transition: transform 0.3s ease; }
+  #sidebar-overlay { transition: opacity 0.3s ease; }
+  .drag-over { border-color: #13ec13 !important; background: rgba(19,236,19,0.08) !important; }
+  .doc-card[data-category] { transition: all 0.2s ease; }
+  .ctx-menu { transition: opacity 0.15s ease, transform 0.15s ease; }
+</style>
+</head>
+<body class="bg-background-light dark:bg-background-dark font-display text-[#111811] dark:text-white transition-colors duration-300">
+
+<script src="/ui/nav.js"></script>
+
+<!-- Hidden file input -->
+<input type="file" id="file-input" class="hidden" multiple accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"/>
+
+<!-- Wrapper -->
+<div class="relative flex h-auto min-h-screen w-full flex-col overflow-x-hidden">
+
+  <!-- Search Bar (hidden until toggled) -->
+  <div id="search-bar" class="mx-4 mt-4 hidden rounded-2xl border border-gray-100 bg-white px-4 py-3 shadow-sm dark:border-gray-800 dark:bg-[#1a2e1a]">
+    <div class="flex items-center gap-2 bg-[#f0f4f0] dark:bg-gray-800 rounded-xl px-3 py-2">
+      <span class="material-symbols-outlined text-gray-400">search</span>
+      <input id="doc-search-input" type="text" placeholder="Search documents..." class="flex-1 bg-transparent border-none focus:ring-0 text-sm text-[#111811] dark:text-white placeholder:text-gray-400"/>
+      <button onclick="document.getElementById('search-bar').classList.add('hidden')" class="text-gray-400">
+        <span class="material-symbols-outlined text-sm">close</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Main Content Scroll Area -->
+  <main class="flex-1 overflow-y-auto">
+
+    <!-- Vault Intro -->
+    <div class="p-4 pt-6">
+      <div class="rounded-2xl border border-gray-200 bg-white/80 p-5 shadow-sm backdrop-blur-sm dark:border-gray-800 dark:bg-[#1a2e1a]/80">
+        <div class="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+          <div>
+            <p class="text-xs font-black uppercase tracking-[0.22em] text-primary">Document Vault</p>
+            <h1 class="mt-1 text-2xl font-bold dark:text-white">Farmer Document Vault</h1>
+            <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Secure storage for your agricultural documents with shared navigation enabled.</p>
+          </div>
+          <div class="flex items-center gap-2">
+            <button id="search-docs-btn" class="inline-flex size-10 items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors" title="Search documents">
+              <span class="material-symbols-outlined">search</span>
+            </button>
+            <a href="/finder" class="inline-flex items-center gap-2 rounded-lg border border-primary/20 bg-primary/10 px-3 py-2 text-sm font-bold text-[#111811] hover:bg-primary/20 dark:text-primary">
+              <span class="material-symbols-outlined text-sm">search</span>
+              Find Schemes
+            </a>
+          </div>
+        </div>
+        <div id="storage-bar" class="mt-4">
+          <div class="mb-1 flex justify-between text-xs text-gray-500">
+            <span id="storage-used-label">8.2 MB used</span>
+            <span>50 MB free</span>
+          </div>
+          <div class="h-2 w-full overflow-hidden rounded-full bg-gray-200 dark:bg-gray-700">
+            <div id="storage-fill" class="h-full rounded-full bg-primary" style="width: 16.4%"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Upload Section -->
+    <div class="px-4 py-4">
+      <div class="bg-white dark:bg-[#1a2e1a] rounded-xl border border-[#dbe6db] dark:border-gray-800 p-5 shadow-sm">
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="text-lg font-bold">Upload Documents</h3>
+          <button id="upload-btn" class="bg-primary text-[#111811] px-4 py-2 rounded-lg font-semibold hover:bg-primary/90 transition-colors flex items-center gap-1 text-sm">
+            <span class="material-symbols-outlined text-sm">upload</span>
+            Upload
+          </button>
+        </div>
+        <div id="drop-zone" class="border-2 border-dashed border-gray-200 dark:border-gray-700 rounded-lg p-8 text-center cursor-pointer hover:border-primary transition-colors" onclick="document.getElementById('file-input').click()">
+          <div id="drop-zone-content" class="flex flex-col items-center gap-3">
+            <span class="material-symbols-outlined text-4xl text-gray-400">cloud_upload</span>
+            <p class="text-gray-500 dark:text-gray-400 text-sm">Drag and drop files here or click to browse</p>
+            <p class="text-xs text-gray-400">Supported formats: PDF, JPG, PNG, DOC (Max 10MB each)</p>
+          </div>
+        </div>
+        <!-- Upload progress (hidden by default) -->
+        <div id="upload-progress" class="hidden mt-3">
+          <div class="flex items-center gap-3">
+            <span class="material-symbols-outlined text-primary animate-spin text-sm">refresh</span>
+            <div class="flex-1">
+              <div class="flex justify-between text-xs mb-1">
+                <span id="upload-filename" class="font-medium truncate"></span>
+                <span id="upload-percent" class="font-bold text-primary">0%</span>
+              </div>
+              <div class="w-full h-1.5 bg-gray-200 rounded-full overflow-hidden">
+                <div id="upload-bar" class="h-full bg-primary rounded-full transition-all" style="width:0%"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Document Categories Tabs -->
+    <div class="px-4 py-2">
+      <div class="flex gap-3 overflow-x-auto no-scrollbar pb-2">
+        <button class="category-tab px-4 py-2 bg-primary text-white rounded-full font-semibold whitespace-nowrap text-sm" data-cat="all">All Documents</button>
+        <button class="category-tab px-4 py-2 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-full font-medium whitespace-nowrap hover:bg-gray-200 dark:hover:bg-gray-700 text-sm" data-cat="Land Records">Land Records</button>
+        <button class="category-tab px-4 py-2 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-full font-medium whitespace-nowrap hover:bg-gray-200 dark:hover:bg-gray-700 text-sm" data-cat="ID Proofs">ID Proofs</button>
+        <button class="category-tab px-4 py-2 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-full font-medium whitespace-nowrap hover:bg-gray-200 dark:hover:bg-gray-700 text-sm" data-cat="Scheme Docs">Scheme Docs</button>
+        <button class="category-tab px-4 py-2 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-full font-medium whitespace-nowrap hover:bg-gray-200 dark:hover:bg-gray-700 text-sm" data-cat="Certificates">Certificates</button>
+      </div>
+    </div>
+
+    <!-- Documents List -->
+    <div class="px-4 py-4 mb-20">
+      <div id="doc-count" class="text-xs text-gray-500 mb-3">Loading documents...</div>
+      <div id="documents-list" class="space-y-3">
+        <!-- Populated by JS -->
+      </div>
+      <div id="empty-state" class="hidden text-center py-12">
+        <span class="material-symbols-outlined text-5xl text-gray-300 block mb-3">folder_open</span>
+        <p class="text-gray-500 font-semibold text-sm">No documents in this category</p>
+        <button onclick="document.getElementById('file-input').click()" class="mt-4 bg-primary text-[#111811] font-bold px-4 py-2 rounded-xl text-sm hover:bg-primary/90 transition-colors">Upload Document</button>
+      </div>
+    </div>
+  </main>
+
+  <!-- Context Menu (floating) -->
+  <div id="ctx-menu" class="fixed z-[70] bg-white dark:bg-gray-900 rounded-xl shadow-2xl border border-gray-100 dark:border-gray-800 p-1 hidden ctx-menu min-w-[160px]">
+    <button class="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 text-sm ctx-rename">
+      <span class="material-symbols-outlined text-sm text-gray-500">edit</span> Rename
+    </button>
+    <button class="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 text-sm ctx-download">
+      <span class="material-symbols-outlined text-sm text-primary">download</span> Download
+    </button>
+    <button class="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 text-sm ctx-share">
+      <span class="material-symbols-outlined text-sm text-blue-500">share</span> Share
+    </button>
+    <div class="my-1 border-t border-gray-100 dark:border-gray-800"></div>
+    <button class="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 text-sm text-red-500 ctx-delete">
+      <span class="material-symbols-outlined text-sm">delete</span> Delete
+    </button>
+  </div>
+
+  <!-- Rename Modal -->
+  <div id="rename-modal" class="fixed inset-0 z-[80] hidden">
+    <div class="absolute inset-0 bg-black/50" onclick="closeRenameModal()"></div>
+    <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white dark:bg-gray-900 rounded-2xl p-6 w-80 max-w-[90vw] shadow-2xl">
+      <h3 class="font-bold mb-3">Rename Document</h3>
+      <input id="rename-input" type="text" class="w-full border border-gray-200 dark:border-gray-700 rounded-xl px-3 py-2 text-sm bg-[#f0f4f0] dark:bg-gray-800 mb-4 focus:ring-primary focus:border-primary"/>
+      <div class="flex gap-3">
+        <button onclick="closeRenameModal()" class="flex-1 border border-gray-200 py-2 rounded-xl text-sm font-bold">Cancel</button>
+        <button onclick="confirmRename()" class="flex-1 bg-primary text-[#111811] py-2 rounded-xl text-sm font-bold">Save</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ── Dark mode ──────────────────────────────────────────────────────────────
+if (localStorage.getItem('ks-dark') === '1') document.documentElement.classList.add('dark');
+
+// ── Document data (session-based with localStorage) ────────────────────────
+const STORAGE_KEY = 'ks_vault_docs';
+
+const DEFAULT_DOCS = [
+  { id: 1, name: 'Land Ownership Deed', type: 'Land Records', ext: 'PDF', size: '2.4 MB', uploadedAgo: '2 days ago', status: 'Verified', icon: 'description', iconBg: 'bg-red-50 dark:bg-red-900/20', iconColor: 'text-red-600 dark:text-red-400' },
+  { id: 2, name: 'Aadhaar Card', type: 'ID Proofs', ext: 'JPG', size: '1.8 MB', uploadedAgo: '1 week ago', status: 'Verified', icon: 'badge', iconBg: 'bg-blue-50 dark:bg-blue-900/20', iconColor: 'text-blue-600 dark:text-blue-400' },
+  { id: 3, name: 'PM-KISAN Certificate', type: 'Scheme Docs', ext: 'PDF', size: '856 KB', uploadedAgo: '3 weeks ago', status: 'Verified', icon: 'verified', iconBg: 'bg-green-50 dark:bg-green-900/20', iconColor: 'text-green-600 dark:text-green-400' },
+  { id: 4, name: 'Soil Test Report', type: 'Certificates', ext: 'PDF', size: '1.2 MB', uploadedAgo: '5 days ago', status: 'Pending', icon: 'pending', iconBg: 'bg-yellow-50 dark:bg-yellow-900/20', iconColor: 'text-yellow-600 dark:text-yellow-400' },
+];
+
+function loadDocs() {
+  try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || DEFAULT_DOCS; }
+  catch { return DEFAULT_DOCS; }
+}
+function saveDocs(docs) {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(docs));
+}
+let docs = loadDocs();
+
+// ── Category filtering ─────────────────────────────────────────────────────
+let activeCategory = 'all';
+let searchQuery = '';
+
+document.querySelectorAll('.category-tab').forEach(btn => {
+  btn.addEventListener('click', () => {
+    activeCategory = btn.dataset.cat;
+    document.querySelectorAll('.category-tab').forEach(b => {
+      b.className = b.className
+        .replace('bg-primary text-white', 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300');
+    });
+    btn.className = btn.className
+      .replace('bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300', 'bg-primary text-white');
+    renderDocs();
+  });
+});
+
+// ── Search docs ────────────────────────────────────────────────────────────
+document.getElementById('search-docs-btn').addEventListener('click', () => {
+  document.getElementById('search-bar').classList.toggle('hidden');
+  if (!document.getElementById('search-bar').classList.contains('hidden'))
+    document.getElementById('doc-search-input').focus();
+});
+document.getElementById('doc-search-input').addEventListener('input', (e) => {
+  searchQuery = e.target.value.toLowerCase();
+  renderDocs();
+});
+
+// ── Render documents ───────────────────────────────────────────────────────
+const CAT_BADGE_COLORS = {
+  'Land Records': 'bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300',
+  'ID Proofs': 'bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300',
+  'Scheme Docs': 'bg-orange-50 dark:bg-orange-900/20 text-orange-700 dark:text-orange-300',
+  'Certificates': 'bg-purple-50 dark:bg-purple-900/20 text-purple-700 dark:text-purple-300',
+};
+const STATUS_BADGE = {
+  'Verified': 'bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-300',
+  'Pending': 'bg-yellow-50 dark:bg-yellow-900/20 text-yellow-700 dark:text-yellow-300',
+};
+
+function renderDocs() {
+  const list = document.getElementById('documents-list');
+  const emptyState = document.getElementById('empty-state');
+  const countEl = document.getElementById('doc-count');
+
+  let filtered = docs.filter(d => {
+    const catMatch = activeCategory === 'all' || d.type === activeCategory;
+    const searchMatch = !searchQuery || d.name.toLowerCase().includes(searchQuery) || d.type.toLowerCase().includes(searchQuery);
+    return catMatch && searchMatch;
+  });
+
+  countEl.textContent = `${filtered.length} document${filtered.length !== 1 ? 's' : ''}`;
+
+  if (!filtered.length) {
+    list.innerHTML = '';
+    emptyState.classList.remove('hidden');
+    return;
+  }
+  emptyState.classList.add('hidden');
+
+  list.innerHTML = filtered.map(doc => {
+    const catColor = CAT_BADGE_COLORS[doc.type] || 'bg-gray-50 text-gray-700';
+    const statColor = STATUS_BADGE[doc.status] || STATUS_BADGE.Pending;
+    return `
+      <div class="doc-card bg-white dark:bg-[#1a2e1a] rounded-xl border border-[#dbe6db] dark:border-gray-800 p-4 shadow-sm hover:shadow-md transition-shadow" data-id="${doc.id}">
+        <div class="flex items-center justify-between mb-3">
+          <div class="flex items-center gap-3">
+            <div class="p-2 ${doc.iconBg} rounded-lg">
+              <span class="material-symbols-outlined ${doc.iconColor}">${doc.icon}</span>
+            </div>
+            <div>
+              <p class="font-semibold text-sm">${doc.name}</p>
+              <p class="text-xs text-gray-500 dark:text-gray-400">${doc.ext} • ${doc.size} • ${doc.uploadedAgo}</p>
+            </div>
+          </div>
+          <div class="flex items-center gap-1">
+            <button class="size-8 flex items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors doc-download-btn" data-id="${doc.id}" title="Download">
+              <span class="material-symbols-outlined text-sm">download</span>
+            </button>
+            <button class="size-8 flex items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors doc-menu-btn" data-id="${doc.id}" title="More options">
+              <span class="material-symbols-outlined text-sm">more_vert</span>
+            </button>
+          </div>
+        </div>
+        <div class="flex items-center gap-2">
+          <span class="text-xs font-bold px-2 py-0.5 rounded-full ${catColor}">${doc.type}</span>
+          <span class="text-xs font-bold px-2 py-0.5 rounded-full ${statColor}">${doc.status}</span>
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  // Attach download & menu listeners
+  list.querySelectorAll('.doc-download-btn').forEach(btn => {
+    btn.addEventListener('click', () => handleDownload(Number(btn.dataset.id)));
+  });
+  list.querySelectorAll('.doc-menu-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => showContextMenu(e, Number(btn.dataset.id)));
+  });
+}
+
+// ── Download handler ───────────────────────────────────────────────────────
+function handleDownload(docId) {
+  const doc = docs.find(d => d.id === docId);
+  if (!doc) return;
+  // Simulate download with toast
+  showToast(`Downloading ${doc.name}...`, 'download');
+  setTimeout(() => showToast(`${doc.name} downloaded!`, 'check_circle'), 1200);
+}
+
+// ── Context menu ───────────────────────────────────────────────────────────
+let ctxDocId = null;
+function showContextMenu(e, docId) {
+  e.stopPropagation();
+  ctxDocId = docId;
+  const menu = document.getElementById('ctx-menu');
+  menu.classList.remove('hidden');
+  const rect = e.currentTarget.getBoundingClientRect();
+  const menuW = 160, menuH = 170;
+  let top = rect.bottom + window.scrollY + 4;
+  let left = rect.left + window.scrollX - menuW + 32;
+  if (top + menuH > window.innerHeight + window.scrollY) top = rect.top + window.scrollY - menuH - 4;
+  if (left < 8) left = 8;
+  menu.style.top = top + 'px';
+  menu.style.left = left + 'px';
+}
+document.addEventListener('click', () => document.getElementById('ctx-menu').classList.add('hidden'));
+document.getElementById('ctx-menu').querySelector('.ctx-download').addEventListener('click', () => { handleDownload(ctxDocId); });
+document.getElementById('ctx-menu').querySelector('.ctx-rename').addEventListener('click', () => {
+  const doc = docs.find(d => d.id === ctxDocId);
+  if (!doc) return;
+  document.getElementById('rename-input').value = doc.name;
+  document.getElementById('rename-modal').classList.remove('hidden');
+});
+document.getElementById('ctx-menu').querySelector('.ctx-share').addEventListener('click', () => {
+  showToast('Share link copied!', 'share');
+});
+document.getElementById('ctx-menu').querySelector('.ctx-delete').addEventListener('click', () => {
+  if (!confirm('Delete this document? This cannot be undone.')) return;
+  docs = docs.filter(d => d.id !== ctxDocId);
+  saveDocs(docs);
+  updateStorageBar();
+  renderDocs();
+  showToast('Document deleted', 'delete');
+});
+
+// ── Rename modal ───────────────────────────────────────────────────────────
+function closeRenameModal() { document.getElementById('rename-modal').classList.add('hidden'); }
+function confirmRename() {
+  const newName = document.getElementById('rename-input').value.trim();
+  if (!newName) return;
+  const idx = docs.findIndex(d => d.id === ctxDocId);
+  if (idx !== -1) { docs[idx].name = newName; saveDocs(docs); renderDocs(); }
+  closeRenameModal();
+  showToast('Renamed successfully', 'edit');
+}
+
+// ── Upload handler ─────────────────────────────────────────────────────────
+function handleFiles(files) {
+  Array.from(files).forEach(file => {
+    if (file.size > 10 * 1024 * 1024) { showToast(`${file.name} exceeds 10MB limit`, 'warning'); return; }
+    simulateUpload(file);
+  });
+}
+
+function simulateUpload(file) {
+  const progressDiv = document.getElementById('upload-progress');
+  const bar = document.getElementById('upload-bar');
+  const pct = document.getElementById('upload-percent');
+  const fnEl = document.getElementById('upload-filename');
+  progressDiv.classList.remove('hidden');
+  fnEl.textContent = file.name;
+  let progress = 0;
+  const interval = setInterval(() => {
+    progress = Math.min(progress + Math.random() * 25, 100);
+    bar.style.width = progress + '%';
+    pct.textContent = Math.round(progress) + '%';
+    if (progress >= 100) {
+      clearInterval(interval);
+      setTimeout(() => {
+        progressDiv.classList.add('hidden');
+        bar.style.width = '0%';
+        addDocumentFromFile(file);
+        showToast(`${file.name} uploaded!`, 'check_circle');
+      }, 400);
+    }
+  }, 150);
+}
+
+function addDocumentFromFile(file) {
+  const ext = file.name.split('.').pop().toUpperCase();
+  const sizeKb = Math.round(file.size / 1024);
+  const size = sizeKb > 1024 ? (sizeKb / 1024).toFixed(1) + ' MB' : sizeKb + ' KB';
+  const category = ext === 'PDF' ? 'Scheme Docs' : ext === 'JPG' || ext === 'PNG' ? 'ID Proofs' : 'Land Records';
+  const newDoc = {
+    id: Date.now(),
+    name: file.name.replace(/\.[^/.]+$/, ''),
+    type: category,
+    ext,
+    size,
+    uploadedAgo: 'just now',
+    status: 'Pending',
+    icon: 'description',
+    iconBg: 'bg-gray-50 dark:bg-gray-800',
+    iconColor: 'text-gray-600',
+  };
+  docs.unshift(newDoc);
+  saveDocs(docs);
+  updateStorageBar();
+  renderDocs();
+}
+
+document.getElementById('upload-btn').addEventListener('click', () => document.getElementById('file-input').click());
+document.getElementById('file-input').addEventListener('change', (e) => { handleFiles(e.target.files); e.target.value = ''; });
+
+// ── Drag and drop ──────────────────────────────────────────────────────────
+const dropZone = document.getElementById('drop-zone');
+dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('drag-over'); });
+dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
+dropZone.addEventListener('drop', (e) => {
+  e.preventDefault();
+  dropZone.classList.remove('drag-over');
+  handleFiles(e.dataTransfer.files);
+});
+
+// ── Storage bar ────────────────────────────────────────────────────────────
+function updateStorageBar() {
+  const totalKb = docs.reduce((sum, d) => {
+    const match = d.size.match(/([\d.]+)\s*(MB|KB)/i);
+    if (!match) return sum;
+    return sum + (match[2].toUpperCase() === 'MB' ? parseFloat(match[1]) * 1024 : parseFloat(match[1]));
+  }, 0);
+  const totalMb = (totalKb / 1024).toFixed(1);
+  document.getElementById('storage-used-label').textContent = `${totalMb} MB used`;
+  document.getElementById('storage-fill').style.width = Math.min((totalKb / 1024 / 50) * 100, 100) + '%';
+}
+
+// ── Toast notifications ────────────────────────────────────────────────────
+function showToast(message, icon = 'info') {
+  const existing = document.getElementById('ks-toast');
+  if (existing) existing.remove();
+  const toast = document.createElement('div');
+  toast.id = 'ks-toast';
+  toast.className = 'fixed top-4 right-4 z-[100] bg-[#111811] dark:bg-white text-white dark:text-[#111811] px-4 py-3 rounded-xl shadow-xl flex items-center gap-2 text-sm font-semibold';
+  toast.innerHTML = `<span class="material-symbols-outlined text-primary text-sm">${icon}</span>${message}`;
+  document.body.appendChild(toast);
+  setTimeout(() => toast.classList.add('opacity-0', 'transition-opacity', 'duration-500'), 2000);
+  setTimeout(() => toast.remove(), 2500);
+}
+
+// ── Init ───────────────────────────────────────────────────────────────────
+updateStorageBar();
+renderDocs();
+</script>
+</body></html>

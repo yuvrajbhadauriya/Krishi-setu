@@ -1,0 +1,7 @@
+.venv/
+.venv-1/
+__MACOSX/
+__pycache__/
+*.zip
+output/
+{output/

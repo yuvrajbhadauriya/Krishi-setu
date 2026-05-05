@@ -1,0 +1,599 @@
+<!DOCTYPE html>
+<html class="light" lang="en" data-page="schemes">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Krishi-Setu Schemes Browser: Search, filter, and inspect every agricultural scheme in the indexed database."/>
+  <title>Krishi-Setu · Schemes Browser</title>
+  <script src="https://cdn.tailwindcss.com?plugins=forms"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" />
+  <script>
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            primary: "#13ec13",
+            "background-light": "#f6f8f6",
+            "background-dark": "#102210",
+          },
+          fontFamily: { display: ["Public Sans", "sans-serif"] },
+        },
+      },
+    };
+  </script>
+  <style>
+    body { font-family: 'Public Sans', sans-serif; min-height: 100dvh; }
+    .no-scrollbar::-webkit-scrollbar { display: none; }
+    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+  </style>
+</head>
+<body class="bg-background-light text-[#111811] dark:bg-background-dark dark:text-white">
+  <script src="/ui/nav.js"></script>
+
+  <main class="mx-auto max-w-7xl px-4 pb-28 pt-24">
+    <section class="mb-6 rounded-3xl border border-emerald-100 bg-gradient-to-br from-emerald-50 via-white to-lime-50 p-6 dark:border-emerald-900/40 dark:from-[#173617] dark:via-[#122712] dark:to-[#1a321a]">
+      <div class="flex flex-wrap items-end justify-between gap-4">
+        <div>
+          <p class="text-xs font-bold uppercase tracking-[0.2em] text-emerald-700 dark:text-emerald-300">Master Data Explorer</p>
+          <h1 class="mt-1 text-3xl font-black tracking-tight">Schemes Browser</h1>
+          <p class="mt-1 text-sm text-gray-600 dark:text-gray-300">Search, filter, compare, and inspect every scheme in your indexed database.</p>
+        </div>
+        <div class="grid grid-cols-3 gap-2 text-center text-xs">
+          <div class="rounded-2xl bg-white/80 px-3 py-2 shadow-sm ring-1 ring-emerald-200 dark:bg-black/20 dark:ring-emerald-900/40">
+            <p id="kpi-total" class="text-lg font-black text-emerald-600">-</p>
+            <p class="text-gray-500 dark:text-gray-300">Total</p>
+          </div>
+          <div class="rounded-2xl bg-white/80 px-3 py-2 shadow-sm ring-1 ring-emerald-200 dark:bg-black/20 dark:ring-emerald-900/40">
+            <p id="kpi-curated" class="text-lg font-black text-blue-600">-</p>
+            <p class="text-gray-500 dark:text-gray-300">Curated</p>
+          </div>
+          <div class="rounded-2xl bg-white/80 px-3 py-2 shadow-sm ring-1 ring-emerald-200 dark:bg-black/20 dark:ring-emerald-900/40">
+            <p id="kpi-ministry" class="text-lg font-black text-amber-600">-</p>
+            <p class="text-gray-500 dark:text-gray-300">Ministries</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="mb-4 rounded-2xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-800 dark:bg-[#1a2e1a]">
+      <div class="grid gap-3 lg:grid-cols-[2fr,1fr,1fr,1fr]">
+        <label class="block">
+          <span class="mb-1 block text-xs font-semibold uppercase tracking-wide text-gray-500">Search Query</span>
+          <div class="flex items-center rounded-xl border border-gray-200 bg-[#f0f4f0] px-3 dark:border-gray-700 dark:bg-[#0f210f]">
+            <span class="material-symbols-outlined text-base text-gray-400">search</span>
+            <input id="query-input" type="text" placeholder="Try PM Kisan, irrigation, subsidy..." class="w-full border-none bg-transparent px-2 py-2.5 text-sm focus:ring-0" />
+            <button id="query-clear" class="hidden text-gray-400 hover:text-red-500" title="Clear search">
+              <span class="material-symbols-outlined text-base">close</span>
+            </button>
+          </div>
+        </label>
+
+        <label class="block">
+          <span class="mb-1 block text-xs font-semibold uppercase tracking-wide text-gray-500">Data Scope</span>
+          <select id="scope-input" class="w-full rounded-xl border-gray-200 bg-[#f0f4f0] text-sm dark:border-gray-700 dark:bg-[#0f210f] focus:border-primary focus:ring-primary">
+            <option value="trusted">Trusted</option>
+            <option value="curated">Curated</option>
+            <option value="strict">Strict</option>
+            <option value="balanced">Balanced</option>
+            <option value="all">All</option>
+            <option value="raw">Raw</option>
+          </select>
+        </label>
+
+        <label class="block">
+          <span class="mb-1 block text-xs font-semibold uppercase tracking-wide text-gray-500">Ministry Filter</span>
+          <input id="ministry-input" list="ministry-options" placeholder="Ministry keyword" class="w-full rounded-xl border-gray-200 bg-[#f0f4f0] text-sm dark:border-gray-700 dark:bg-[#0f210f] focus:border-primary focus:ring-primary" />
+          <datalist id="ministry-options"></datalist>
+        </label>
+
+        <label class="block">
+          <span class="mb-1 block text-xs font-semibold uppercase tracking-wide text-gray-500">Per Page</span>
+          <select id="limit-input" class="w-full rounded-xl border-gray-200 bg-[#f0f4f0] text-sm dark:border-gray-700 dark:bg-[#0f210f] focus:border-primary focus:ring-primary">
+            <option value="12">12</option>
+            <option value="24" selected>24</option>
+            <option value="48">48</option>
+            <option value="100">100</option>
+          </select>
+        </label>
+      </div>
+
+      <div class="mt-3 grid gap-3 lg:grid-cols-[1fr,auto,auto] lg:items-center">
+        <div>
+          <div class="mb-1 flex items-center justify-between text-xs font-semibold uppercase tracking-wide text-gray-500">
+            <span>Minimum Confidence</span>
+            <span id="score-value" class="text-primary">0%</span>
+          </div>
+          <input id="score-input" type="range" min="0" max="100" value="0" class="w-full accent-primary" />
+        </div>
+
+        <div class="flex gap-1 rounded-xl bg-gray-100 p-1 dark:bg-[#0f210f]">
+          <button id="cards-view-btn" class="rounded-lg bg-white px-3 py-1.5 text-xs font-bold text-primary shadow-sm dark:bg-[#213621]">
+            <span class="material-symbols-outlined align-middle text-[16px]">grid_view</span>
+            Cards
+          </button>
+          <button id="table-view-btn" class="rounded-lg px-3 py-1.5 text-xs font-semibold text-gray-500 hover:text-primary dark:text-gray-300">
+            <span class="material-symbols-outlined align-middle text-[16px]">table_rows</span>
+            Table
+          </button>
+        </div>
+
+        <div class="flex gap-2">
+          <button id="apply-btn" class="rounded-xl bg-primary px-4 py-2 text-sm font-bold text-[#111811] hover:bg-primary/90">Apply</button>
+          <button id="reset-btn" class="rounded-xl border border-gray-200 px-4 py-2 text-sm font-semibold hover:border-primary hover:text-primary dark:border-gray-700">Reset</button>
+        </div>
+      </div>
+
+      <div class="mt-3 flex gap-2 overflow-x-auto no-scrollbar">
+        <button class="type-chip rounded-full bg-primary px-3 py-1 text-xs font-bold text-[#111811]" data-type="">All Types</button>
+        <button class="type-chip rounded-full bg-blue-100 px-3 py-1 text-xs font-semibold text-blue-700 dark:bg-blue-900/30 dark:text-blue-300" data-type="income_support">Income Support</button>
+        <button class="type-chip rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold text-amber-700 dark:bg-amber-900/30 dark:text-amber-300" data-type="insurance">Insurance</button>
+        <button class="type-chip rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300" data-type="subsidy">Subsidy</button>
+        <button class="type-chip rounded-full bg-violet-100 px-3 py-1 text-xs font-semibold text-violet-700 dark:bg-violet-900/30 dark:text-violet-300" data-type="credit">Credit</button>
+        <button class="type-chip rounded-full bg-lime-100 px-3 py-1 text-xs font-semibold text-lime-700 dark:bg-lime-900/30 dark:text-lime-300" data-type="organic_farming">Organic</button>
+        <button class="type-chip rounded-full bg-gray-100 px-3 py-1 text-xs font-semibold text-gray-700 dark:bg-gray-800 dark:text-gray-300" data-type="other">Other</button>
+      </div>
+    </section>
+
+    <section class="mb-4 flex flex-wrap items-center justify-between gap-2 text-sm">
+      <p id="results-meta" class="font-semibold text-gray-600 dark:text-gray-300">Loading schemes...</p>
+      <div class="flex items-center gap-2">
+        <button id="prev-btn" class="rounded-xl border border-gray-200 px-3 py-1.5 text-xs font-semibold disabled:cursor-not-allowed disabled:opacity-40 dark:border-gray-700">Prev</button>
+        <span id="page-meta" class="text-xs font-bold text-gray-500">1 / 1</span>
+        <button id="next-btn" class="rounded-xl border border-gray-200 px-3 py-1.5 text-xs font-semibold disabled:cursor-not-allowed disabled:opacity-40 dark:border-gray-700">Next</button>
+      </div>
+    </section>
+
+    <section id="cards-wrap" class="grid gap-4 sm:grid-cols-2 xl:grid-cols-3"></section>
+
+    <section id="table-wrap" class="hidden overflow-auto rounded-2xl border border-gray-200 bg-white shadow-sm dark:border-gray-800 dark:bg-[#1a2e1a]">
+      <table class="min-w-full text-left text-xs">
+        <thead class="bg-gray-50 text-gray-600 dark:bg-[#203620] dark:text-gray-300">
+          <tr>
+            <th class="px-3 py-2">#</th>
+            <th class="px-3 py-2">Scheme</th>
+            <th class="px-3 py-2">Type</th>
+            <th class="px-3 py-2">Ministry</th>
+            <th class="px-3 py-2">Confidence</th>
+            <th class="px-3 py-2">Sources</th>
+          </tr>
+        </thead>
+        <tbody id="table-body"></tbody>
+      </table>
+    </section>
+
+    <div class="mt-6 flex justify-center">
+      <button id="load-more-btn" class="hidden rounded-2xl border border-gray-200 bg-white px-5 py-2.5 text-sm font-bold hover:border-primary hover:text-primary dark:border-gray-700 dark:bg-[#1a2e1a]">
+        Load More
+      </button>
+    </div>
+  </main>
+
+  <aside id="detail-overlay" class="fixed inset-0 z-[85] hidden">
+    <div id="detail-backdrop" class="absolute inset-0 bg-black/45 backdrop-blur-[2px]"></div>
+    <div id="detail-panel" class="absolute right-0 top-0 h-full w-full max-w-xl translate-x-full overflow-hidden bg-white shadow-2xl transition-transform duration-300 dark:bg-[#101f10]">
+      <div class="border-b border-gray-100 bg-gradient-to-r from-[#102210] to-[#1b3a1b] p-5 text-white dark:border-gray-800">
+        <div class="flex items-start justify-between gap-3">
+          <div class="min-w-0 flex-1">
+            <p id="detail-type" class="mb-2 inline-flex rounded-full bg-white/20 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide">Scheme</p>
+            <h2 id="detail-name" class="text-xl font-black leading-snug">Loading...</h2>
+            <p id="detail-ministry" class="mt-1 text-xs text-white/70"></p>
+          </div>
+          <button id="detail-close" class="rounded-full bg-white/15 p-1.5 hover:bg-white/30">
+            <span class="material-symbols-outlined text-sm">close</span>
+          </button>
+        </div>
+        <div class="mt-3 flex items-center gap-2 text-xs">
+          <span class="text-white/70">Confidence</span>
+          <div class="h-1.5 flex-1 overflow-hidden rounded-full bg-white/20">
+            <div id="detail-confidence-bar" class="h-full rounded-full bg-primary" style="width:0%"></div>
+          </div>
+          <span id="detail-confidence-text" class="font-bold text-primary">0%</span>
+        </div>
+      </div>
+
+      <div id="detail-content" class="h-[calc(100%-180px)] overflow-y-auto p-5 text-sm"></div>
+
+      <div class="grid grid-cols-2 gap-3 border-t border-gray-100 bg-white p-4 dark:border-gray-800 dark:bg-[#182d18]">
+        <button id="detail-eligibility" class="rounded-xl bg-primary py-2.5 text-sm font-bold text-[#111811] hover:bg-primary/90">Check Eligibility</button>
+        <button id="detail-website" class="rounded-xl border border-gray-200 py-2.5 text-sm font-bold hover:border-primary hover:text-primary dark:border-gray-700">Official Website</button>
+      </div>
+    </div>
+  </aside>
+
+  <script>
+    const state = {
+      query: "",
+      type: "",
+      scope: "trusted",
+      ministry: "",
+      minScore: 0,
+      limit: 24,
+      offset: 0,
+      total: 0,
+      view: "cards",
+      loading: false,
+    };
+
+    let activeSchemeId = null;
+    let activeSchemeWebsite = "";
+
+    const typeConfig = {
+      income_support: { label: "Income Support", badge: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300" },
+      insurance: { label: "Insurance", badge: "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300" },
+      subsidy: { label: "Subsidy", badge: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300" },
+      credit: { label: "Credit", badge: "bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-300" },
+      organic_farming: { label: "Organic Farming", badge: "bg-lime-100 text-lime-700 dark:bg-lime-900/30 dark:text-lime-300" },
+      other: { label: "Other", badge: "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300" },
+    };
+
+    function esc(text) {
+      return String(text || "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/\"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+    }
+
+    function short(text, max = 140) {
+      const t = String(text || "").trim();
+      if (!t) return "";
+      return t.length > max ? t.slice(0, max - 1) + "..." : t;
+    }
+
+    function cfg(type) {
+      return typeConfig[type] || typeConfig.other;
+    }
+
+    function setTypeChipState() {
+      document.querySelectorAll(".type-chip").forEach((chip) => {
+        const active = chip.dataset.type === state.type;
+        if (active) {
+          chip.classList.add("ring-2", "ring-offset-1", "ring-primary", "font-bold");
+        } else {
+          chip.classList.remove("ring-2", "ring-offset-1", "ring-primary", "font-bold");
+        }
+      });
+    }
+
+    function buildCard(scheme) {
+      const tc = cfg(scheme.scheme_type);
+      const benefit = short(scheme.benefit_amount || "", 32);
+      const summary = short(scheme.objective || scheme.rationale || scheme.target_beneficiaries || "No summary available", 110);
+      return `
+        <article class="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md dark:border-gray-800 dark:bg-[#1a2e1a]">
+          <div class="mb-2 flex items-start justify-between gap-2">
+            <span class="rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide ${tc.badge}">${esc(tc.label)}</span>
+            <span class="text-xs font-black ${Number(scheme.confidence_score) >= 60 ? "text-emerald-600" : "text-amber-600"}">${Number(scheme.confidence_score || 0)}%</span>
+          </div>
+          <h3 class="text-sm font-bold leading-snug line-clamp-2">${esc(scheme.scheme_name)}</h3>
+          <p class="mt-2 text-xs text-gray-500 dark:text-gray-300 line-clamp-3">${esc(summary)}</p>
+          <div class="mt-3 flex items-center justify-between gap-2 text-[11px] text-gray-500 dark:text-gray-400">
+            <span class="truncate">${esc(short(scheme.nodal_ministry || "", 28) || "Ministry not listed")}</span>
+            <span>${Number(scheme.source_count || 0)} src</span>
+          </div>
+          ${benefit ? `<p class="mt-2 rounded-lg bg-primary/10 px-2 py-1 text-xs font-bold text-emerald-700 dark:text-emerald-300">${esc(benefit)}</p>` : ""}
+          <div class="mt-3 grid grid-cols-2 gap-2">
+            <button class="open-detail rounded-xl border border-gray-200 py-2 text-xs font-bold hover:border-primary hover:text-primary dark:border-gray-700" data-scheme-id="${scheme.scheme_id}">Details</button>
+            <a href="/eligibility?scheme_id=${scheme.scheme_id}" class="rounded-xl bg-primary py-2 text-center text-xs font-bold text-[#111811] hover:bg-primary/90">Eligibility</a>
+          </div>
+        </article>`;
+    }
+
+    function buildTableRow(scheme, index) {
+      const tc = cfg(scheme.scheme_type);
+      return `
+        <tr class="border-t border-gray-100 text-xs hover:bg-primary/5 dark:border-gray-800" data-scheme-id="${scheme.scheme_id}">
+          <td class="px-3 py-2 text-gray-400">${index}</td>
+          <td class="px-3 py-2 font-semibold">${esc(short(scheme.scheme_name, 66))}</td>
+          <td class="px-3 py-2"><span class="rounded-full px-2 py-0.5 text-[10px] font-bold ${tc.badge}">${esc(tc.label)}</span></td>
+          <td class="px-3 py-2 text-gray-600 dark:text-gray-300">${esc(short(scheme.nodal_ministry || "-", 34))}</td>
+          <td class="px-3 py-2 font-bold">${Number(scheme.confidence_score || 0)}%</td>
+          <td class="px-3 py-2">${Number(scheme.source_count || 0)}</td>
+        </tr>`;
+    }
+
+    function updateMeta(itemCount) {
+      const start = state.total === 0 ? 0 : (state.offset - itemCount + 1);
+      const end = Math.min(state.offset, state.total);
+      const totalPages = Math.max(1, Math.ceil(state.total / state.limit));
+      const page = Math.max(1, Math.ceil(state.offset / state.limit));
+
+      document.getElementById("results-meta").textContent = `Showing ${start}-${end} of ${state.total.toLocaleString()} schemes`;
+      document.getElementById("page-meta").textContent = `${page} / ${totalPages}`;
+      document.getElementById("prev-btn").disabled = state.offset <= itemCount;
+      document.getElementById("next-btn").disabled = state.offset >= state.total;
+      document.getElementById("load-more-btn").classList.toggle("hidden", state.offset >= state.total);
+    }
+
+    async function fetchSchemes(reset = true) {
+      if (state.loading) return;
+      state.loading = true;
+      if (reset) state.offset = 0;
+
+      const cardsWrap = document.getElementById("cards-wrap");
+      const tableBody = document.getElementById("table-body");
+      if (reset) {
+        const loadingCard = '<div class="col-span-full rounded-2xl border border-gray-200 bg-white p-8 text-center text-sm text-gray-500 dark:border-gray-800 dark:bg-[#1a2e1a]"><span class="material-symbols-outlined mb-2 block animate-spin text-2xl text-primary">refresh</span>Loading schemes...</div>';
+        cardsWrap.innerHTML = loadingCard;
+        tableBody.innerHTML = '<tr><td colspan="6" class="px-3 py-6 text-center text-gray-500">Loading...</td></tr>';
+      }
+
+      try {
+        const params = new URLSearchParams({
+          query: state.query,
+          scheme_type: state.type,
+          scope: state.scope,
+          ministry: state.ministry,
+          min_score: String(state.minScore),
+          limit: String(state.limit),
+          offset: String(state.offset),
+          mode: "smart",
+        });
+
+        const data = await fetch(`/api/master/search?${params.toString()}`).then((r) => r.json());
+        const items = data.items || [];
+        state.total = Number(data.total || 0);
+        state.offset = Number(data.offset || 0) + items.length;
+
+        if (!items.length && reset) {
+          const empty = '<div class="col-span-full rounded-2xl border border-dashed border-gray-300 bg-white p-10 text-center dark:border-gray-700 dark:bg-[#1a2e1a]"><span class="material-symbols-outlined mb-2 block text-4xl text-gray-300">search_off</span><p class="font-bold">No schemes matched your filters</p><p class="mt-1 text-xs text-gray-500">Try a broader scope or clear filters.</p></div>';
+          cardsWrap.innerHTML = empty;
+          tableBody.innerHTML = '<tr><td colspan="6" class="px-3 py-8 text-center text-gray-500">No rows to display.</td></tr>';
+          updateMeta(0);
+          return;
+        }
+
+        if (state.view === "cards") {
+          if (reset) cardsWrap.innerHTML = "";
+          items.forEach((item, i) => {
+            cardsWrap.insertAdjacentHTML("beforeend", buildCard(item, state.offset - items.length + i + 1));
+          });
+        } else {
+          if (reset) tableBody.innerHTML = "";
+          items.forEach((item, i) => {
+            tableBody.insertAdjacentHTML("beforeend", buildTableRow(item, state.offset - items.length + i + 1));
+          });
+        }
+
+        updateMeta(items.length);
+        bindDetailHandlers();
+      } catch (error) {
+        const errText = esc(error?.message || "Failed to load schemes");
+        cardsWrap.innerHTML = `<div class="col-span-full rounded-2xl border border-red-200 bg-red-50 p-6 text-sm text-red-700 dark:border-red-800/40 dark:bg-red-950/20 dark:text-red-300">${errText}</div>`;
+      } finally {
+        state.loading = false;
+      }
+    }
+
+    function openDetailPanel() {
+      document.getElementById("detail-overlay").classList.remove("hidden");
+      document.body.style.overflow = "hidden";
+      requestAnimationFrame(() => {
+        document.getElementById("detail-panel").classList.remove("translate-x-full");
+      });
+    }
+
+    function closeDetailPanel() {
+      document.getElementById("detail-panel").classList.add("translate-x-full");
+      setTimeout(() => {
+        document.getElementById("detail-overlay").classList.add("hidden");
+        document.body.style.overflow = "";
+      }, 280);
+    }
+
+    async function showSchemeDetail(schemeId) {
+      activeSchemeId = schemeId;
+      activeSchemeWebsite = "";
+      openDetailPanel();
+
+      document.getElementById("detail-name").textContent = "Loading...";
+      document.getElementById("detail-content").innerHTML = '<p class="py-8 text-center text-gray-500">Loading scheme detail...</p>';
+
+      try {
+        const data = await fetch(`/api/master/schemes/${schemeId}`).then((r) => r.json());
+        const score = Number(data.confidence_score || 0);
+        const detailType = cfg(data.scheme_type).label;
+
+        document.getElementById("detail-type").textContent = detailType;
+        document.getElementById("detail-name").textContent = data.scheme_name || "Scheme";
+        document.getElementById("detail-ministry").textContent = data.nodal_ministry || "Ministry not listed";
+        document.getElementById("detail-confidence-bar").style.width = `${score}%`;
+        document.getElementById("detail-confidence-text").textContent = `${score}%`;
+
+        activeSchemeWebsite = data.official_website || "";
+
+        const rules = (data.eligibility_rules || []).slice(0, 6);
+        const docs = (data.requirements || []).slice(0, 6);
+        const facts = (data.key_facts || []).slice(0, 5);
+
+        document.getElementById("detail-content").innerHTML = `
+          ${data.objective ? `<section class="mb-4 rounded-xl bg-gray-50 p-3 dark:bg-[#1d341d]"><h3 class="mb-1 text-xs font-black uppercase tracking-wide text-gray-500">Objective</h3><p class="text-sm leading-relaxed">${esc(data.objective)}</p></section>` : ""}
+          ${data.benefit_amount ? `<section class="mb-4 rounded-xl bg-primary/10 p-3"><h3 class="mb-1 text-xs font-black uppercase tracking-wide text-emerald-700">Benefit</h3><p class="text-sm font-bold text-emerald-700 dark:text-emerald-300">${esc(data.benefit_amount)}</p></section>` : ""}
+          ${rules.length ? `<section class="mb-4"><h3 class="mb-2 text-xs font-black uppercase tracking-wide text-gray-500">Eligibility Rules</h3><ul class="space-y-2">${rules.map((r) => `<li class="rounded-lg bg-emerald-50 px-3 py-2 text-sm dark:bg-emerald-900/20">${esc(r)}</li>`).join("")}</ul></section>` : ""}
+          ${docs.length ? `<section class="mb-4"><h3 class="mb-2 text-xs font-black uppercase tracking-wide text-gray-500">Required Documents</h3><ul class="space-y-2">${docs.map((d) => `<li class="rounded-lg bg-blue-50 px-3 py-2 text-sm dark:bg-blue-900/20">${esc(d)}</li>`).join("")}</ul></section>` : ""}
+          ${facts.length ? `<section class="mb-4"><h3 class="mb-2 text-xs font-black uppercase tracking-wide text-gray-500">Key Facts</h3><ul class="space-y-1">${facts.map((f) => `<li class="flex items-start gap-2 text-sm"><span class="mt-1 h-1.5 w-1.5 rounded-full bg-primary"></span>${esc(f)}</li>`).join("")}</ul></section>` : ""}
+          <section class="rounded-xl border border-gray-200 p-3 text-xs text-gray-600 dark:border-gray-700 dark:text-gray-300">
+            <p><strong>Sources:</strong> ${Number(data.source_count || 0)}</p>
+            <p><strong>Versions:</strong> ${Number(data.version_count || 0)}</p>
+            <p><strong>Updated:</strong> ${esc((data.updated_at || "").replace("T", " ").replace("Z", "")) || "-"}</p>
+          </section>`;
+      } catch {
+        document.getElementById("detail-content").innerHTML = '<p class="py-8 text-center text-red-500">Could not load detail for this scheme.</p>';
+      }
+    }
+
+    function bindDetailHandlers() {
+      document.querySelectorAll(".open-detail").forEach((btn) => {
+        btn.onclick = () => showSchemeDetail(Number(btn.dataset.schemeId));
+      });
+      document.querySelectorAll("#table-body tr").forEach((row) => {
+        row.onclick = () => showSchemeDetail(Number(row.dataset.schemeId));
+      });
+    }
+
+    async function loadHeaderStats() {
+      try {
+        const [overview, masterOverview] = await Promise.all([
+          fetch("/api/overview").then((r) => r.json()),
+          fetch("/api/master/overview").then((r) => r.json()),
+        ]);
+
+        const total = masterOverview.totals?.master_schemes || overview.totals?.master || 0;
+        const curated = masterOverview.totals?.curated_master || overview.totals?.curated || 0;
+        const ministries = (masterOverview.top_ministries || []).length;
+
+        document.getElementById("kpi-total").textContent = Number(total).toLocaleString();
+        document.getElementById("kpi-curated").textContent = Number(curated).toLocaleString();
+        document.getElementById("kpi-ministry").textContent = Number(ministries).toLocaleString();
+
+        const datalist = document.getElementById("ministry-options");
+        datalist.innerHTML = (masterOverview.top_ministries || [])
+          .map((item) => `<option value="${esc(item.nodal_ministry)}"></option>`)
+          .join("");
+      } catch {
+        // Keep defaults when overview APIs are unavailable.
+      }
+    }
+
+    function resetFilters() {
+      state.query = "";
+      state.type = "";
+      state.scope = "trusted";
+      state.ministry = "";
+      state.minScore = 0;
+      state.limit = 24;
+      state.offset = 0;
+
+      document.getElementById("query-input").value = "";
+      document.getElementById("query-clear").classList.add("hidden");
+      document.getElementById("scope-input").value = "trusted";
+      document.getElementById("ministry-input").value = "";
+      document.getElementById("score-input").value = "0";
+      document.getElementById("score-value").textContent = "0%";
+      document.getElementById("limit-input").value = "24";
+      setTypeChipState();
+      fetchSchemes(true);
+    }
+
+    function switchView(view) {
+      state.view = view;
+      const cardsBtn = document.getElementById("cards-view-btn");
+      const tableBtn = document.getElementById("table-view-btn");
+      const cardsWrap = document.getElementById("cards-wrap");
+      const tableWrap = document.getElementById("table-wrap");
+
+      const cardsActive = view === "cards";
+      cardsBtn.classList.toggle("bg-white", cardsActive);
+      cardsBtn.classList.toggle("dark:bg-[#213621]", cardsActive);
+      cardsBtn.classList.toggle("shadow-sm", cardsActive);
+      cardsBtn.classList.toggle("text-primary", cardsActive);
+      tableBtn.classList.toggle("bg-white", !cardsActive);
+      tableBtn.classList.toggle("dark:bg-[#213621]", !cardsActive);
+      tableBtn.classList.toggle("shadow-sm", !cardsActive);
+      tableBtn.classList.toggle("text-primary", !cardsActive);
+
+      cardsWrap.classList.toggle("hidden", !cardsActive);
+      tableWrap.classList.toggle("hidden", cardsActive);
+      fetchSchemes(true);
+    }
+
+    function applyCurrentFilters() {
+      state.query = document.getElementById("query-input").value.trim();
+      state.scope = document.getElementById("scope-input").value;
+      state.ministry = document.getElementById("ministry-input").value.trim();
+      state.minScore = Number(document.getElementById("score-input").value || 0);
+      state.limit = Number(document.getElementById("limit-input").value || 24);
+      fetchSchemes(true);
+    }
+
+    document.getElementById("query-input").addEventListener("input", (event) => {
+      const hasValue = Boolean(event.target.value.trim());
+      document.getElementById("query-clear").classList.toggle("hidden", !hasValue);
+    });
+
+    document.getElementById("query-input").addEventListener("keydown", (event) => {
+      if (event.key === "Enter") {
+        event.preventDefault();
+        applyCurrentFilters();
+      }
+    });
+
+    document.getElementById("query-clear").addEventListener("click", () => {
+      document.getElementById("query-input").value = "";
+      document.getElementById("query-clear").classList.add("hidden");
+      applyCurrentFilters();
+    });
+
+    document.getElementById("score-input").addEventListener("input", (event) => {
+      document.getElementById("score-value").textContent = `${event.target.value}%`;
+    });
+
+    document.getElementById("scope-input").addEventListener("change", applyCurrentFilters);
+    document.getElementById("ministry-input").addEventListener("change", applyCurrentFilters);
+    document.getElementById("limit-input").addEventListener("change", applyCurrentFilters);
+    document.getElementById("apply-btn").addEventListener("click", applyCurrentFilters);
+    document.getElementById("reset-btn").addEventListener("click", resetFilters);
+
+    document.querySelectorAll(".type-chip").forEach((chip) => {
+      chip.addEventListener("click", () => {
+        state.type = chip.dataset.type || "";
+        setTypeChipState();
+        fetchSchemes(true);
+      });
+    });
+
+    document.getElementById("cards-view-btn").addEventListener("click", () => switchView("cards"));
+    document.getElementById("table-view-btn").addEventListener("click", () => switchView("table"));
+
+    document.getElementById("prev-btn").addEventListener("click", () => {
+      state.offset = Math.max(0, state.offset - state.limit * 2);
+      state.loading = false;
+      fetchSchemes(true);
+    });
+
+    document.getElementById("next-btn").addEventListener("click", () => {
+      fetchSchemes(false);
+    });
+
+    document.getElementById("load-more-btn").addEventListener("click", () => {
+      fetchSchemes(false);
+    });
+
+    document.getElementById("detail-close").addEventListener("click", closeDetailPanel);
+    document.getElementById("detail-backdrop").addEventListener("click", closeDetailPanel);
+
+    document.getElementById("detail-eligibility").addEventListener("click", () => {
+      if (!activeSchemeId) return;
+      window.location.href = `/eligibility?scheme_id=${activeSchemeId}`;
+    });
+
+    document.getElementById("detail-website").addEventListener("click", () => {
+      if (activeSchemeWebsite) {
+        window.open(activeSchemeWebsite, "_blank", "noreferrer");
+        return;
+      }
+      if (window.ksToast) {
+        window.ksToast("No official website listed", "info");
+      }
+    });
+
+    (function init() {
+      const q = new URLSearchParams(window.location.search).get("query");
+      if (q) {
+        state.query = q;
+        document.getElementById("query-input").value = q;
+        document.getElementById("query-clear").classList.remove("hidden");
+      }
+
+      setTypeChipState();
+      loadHeaderStats();
+      fetchSchemes(true);
+    })();
+  </script>
+</body>
+</html>
