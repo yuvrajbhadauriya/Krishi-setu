@@ -364,8 +364,11 @@ async function fetchSchemes(reset = false) {
       resultsContainer.innerHTML = '<div class="text-sm text-gray-500 dark:text-gray-400 py-10 text-center"><span class="material-symbols-outlined text-4xl text-gray-300 block mb-2 animate-spin">refresh</span>Loading...</div>';
       loadMoreBtn.style.display = 'none';
     }
-    const url = new URL('/api/schemes', window.location.origin);
-    url.searchParams.set('scope', currentScope);
+    
+    // Use the powerful master search API for intelligent scheme discovery
+    const url = new URL('/api/master/search', window.location.origin);
+    url.searchParams.set('scope', currentScope === 'curated' ? 'trusted' : 'all');
+    url.searchParams.set('mode', 'smart');
     url.searchParams.set('limit', limit);
     url.searchParams.set('offset', offset);
     if (currentQuery) url.searchParams.set('query', currentQuery);
